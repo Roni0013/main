@@ -7,6 +7,7 @@ use app\models\Contract;
 use app\commands\xmlToArrayParser;
 use app\models\supplier;
 use app\models\product;
+use app\models\files;
 
 /**
  * Description of ContractController
@@ -14,6 +15,9 @@ use app\models\product;
  * @author roni
  */
 class ContractController extends MyController {
+
+//    const FTP_FOLDER = 'fcs_regions/Krasnodarskij_kraj/contracts';
+//    const PATH_RESOURCE ='resource/contracts/';
 
     public function todb($fileName) {
         $xmlArray = $this->getXmlArray($fileName);
@@ -110,22 +114,53 @@ class ContractController extends MyController {
     }
 
     public function actionUpdate() {
-        $pathFolder = 'resource/contract/';
-        $pathTempFolder = 'temp/';
-        $listZipFiles = scandir($pathFolder);
-        array_shift($listZipFiles);
-        array_shift($listZipFiles);
-        foreach ($listZipFiles as $zipFile) {
-            print_r($zipFile . "\n");
-            self::unZip($pathFolder . $zipFile);
-            $listFiles = scandir($pathTempFolder);
-            array_shift($listFiles);
-            array_shift($listFiles);
-            $numberFiles = count($listFiles);
-            foreach ($listFiles as $fileName) {
-                $this->todb($pathTempFolder . $fileName);
-                unlink($pathTempFolder . $fileName);
+        $filesObj = new files();
+        $query=$filesObj->find()->where(['model'=>'contract'])->asArray()->all();
+        $files= array_column($query, 'filename');
+        foreach (scandir($pathFolder=$this->pathResource()) as $tempFile) {
+//            $pathFolder = 'resource/contract/';
+            $pathTempFolder = 'temp/';
+            exec ('rm -f temp/*');
+            $listZipFiles = scandir($pathFolder);
+            array_shift($listZipFiles);
+            array_shift($listZipFiles);
+            foreach ($listZipFiles as $zipFile) {
+                // не работать над отработанными zip файлами
+                if (in_array($zipFile, $listZipFiles)){
+                    continue;
+                }
+                print_r($zipFile . "\n");
+                self::unZip($pathFolder . $zipFile);
+                $listFiles = scandir($pathTempFolder);
+                array_shift($listFiles);
+                array_shift($listFiles);
+                $numberFiles = count($listFiles);
+                //распарсить все из папки $pathTempFolder
+                foreach ($listFiles as $fileName) {
+                    $starttime = microtime(TRUE);
+                    $this->todb($pathTempFolder . $fileName);
+                    $endtime = microtime(true);
+                    $time = (int) ($endtime - $starttime + 1);
+                    $min = (int) ($time / 60);
+                    $sec = (int) ($time % 60);
+                    $filesObj->setAttribute('filename', $fileName);
+                    $filesObj->setAttribute('model', "contract");
+                    $filesObj->setAttribute('time', "$min м $sec с");
+                    $filesObj->save();
+                    unlink($pathTempFolder . $fileName);
+                }
             }
         }
     }
+
+    public function path() {
+        return 'fcs_regions/Krasnodarskij_kraj/contracts/';
+    }
+
+    public function pathResource (){
+        return 'resource/contracts/';
+    }
+
+
+
 }

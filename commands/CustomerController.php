@@ -3,19 +3,20 @@
 namespace app\commands;
 
 use app\commands\xmlToArrayParser;
-use yii\console\Controller;
+use app\commands\MyController;
 use app\models\customer;
 use app\models\factualAddress;
 use app\models\area;
 use app\models\region;
 use app\models\settlement;
 
+
 /**
  * Description of CustomerController
  *
  * @author roni
  */
-class CustomerController extends Controller {
+class CustomerController extends MyController {
 
     public function actionTodb() {
 
@@ -51,14 +52,14 @@ class CustomerController extends Controller {
         unset ($ids,$idVal);
     }
 
-    private function getXmlArray($xmlText) {
+    public function getXmlArray($xmlText) {
         $xmlObject = new xmlToArrayParser($xmlText);
         $xmlArray = $xmlObject->array;
         unset($xmlObject);
         return $xmlArray;
     }
 
-    private function getXmlBits($xmlFileName) {
+    public function getXmlBits($xmlFileName,$tag='') {
         $xmltext = file_get_contents($xmlFileName);
         $xmltext = preg_replace('/oos:/', '', $xmltext);
         $xmltext = preg_replace('/ns2:/', '', $xmltext);
@@ -95,5 +96,13 @@ class CustomerController extends Controller {
             $settlementObj->save();
             $settlementObj->link('factualAddress', $addrObj);
         }
+    }
+
+    public function path() {
+        return 'fcs_nsi/nsiOrganization/';
+    }
+
+    public function pathResource (){
+        return 'resource/customer/';
     }
 }
