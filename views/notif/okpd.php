@@ -8,20 +8,24 @@
   ?>
 
 
-$form= ActiveForm::begin(['action'=>'notif/notif']) ;
-// $form->field($OKPD,'name')->label('Выберите отрасль')->widget(Select2::className(),[
-//    'data'=>$keyval,
-//    'size'=> Select2::SMALL,
-//    'pluginOptions' => ['allowClear'=>TRUE],
-//    'theme' => 'bootstrap',
-//    'options' => [
-//            'multiple' => TRUE,
-//            'placeholder'=> 'Выберите отрасль'
-//            ]
-//    ]);
 
+
+<?php
+
+$form= ActiveForm::begin(['action'=>'notif/notif']) ;
+ echo $form->field($OKPD,'name')->label('Выберите отрасль')->widget(Select2::className(),[
+    'data'=>$keyval,
+    'size'=> Select2::SMALL,
+    'pluginOptions' => ['allowClear'=>TRUE],
+    'theme' => 'bootstrap',
+    'options' => [
+            'multiple' => TRUE,
+            'placeholder'=> 'Выберите отрасль'
+            ]
+    ]);
+?>
 <?=  Html::submitButton('Отправить')  ?>
-php ActiveForm::end()?>
+<?php  ActiveForm::end()?>
 
 
 <?php //debug ($spisok) ?>

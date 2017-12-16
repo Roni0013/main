@@ -9,7 +9,7 @@ use app\models\factualAddress;
 use app\models\area;
 use app\models\region;
 use app\models\settlement;
-
+use app\models\files;
 
 /**
  * Description of CustomerController
@@ -19,9 +19,12 @@ use app\models\settlement;
 class CustomerController extends MyController {
 
     public function actionTodb() {
-
+    $i=0;
         $customerObj = new customer;
+        //список существующих id
         $ids = $customerObj->findBySql('SELECT regNumber FROM customer')->asArray()->all();
+        $idFull = $customerObj->findBySql('SELECT regNumber FROM customer WHERE fullRecord=0')->asArray()->limit(1)->one();
+
         unset($customerObj);
         $idVal = array_column($ids, 'regNumber');
         $xmlTextBits = $this->getXmlBits('1.xml');
@@ -31,8 +34,21 @@ class CustomerController extends MyController {
             $xmlArray = $this->getXmlArray($xmlBit);
             $customerObj->attributes = $xmlArray['nsiOrganization'];
           $regNumber = $customerObj->getAttribute('regNumber');
-          //если вставилось, то вставить все зависимые таблицы
 
+
+//      если запись неполная то удалить ее
+
+          if (($customerObj->getAttribute('regNumber')) == ($idFull['regNumber']) and isset ($idFull['regNumber'])) {
+            $contId = $customerObj->getAttribute('regNumber');
+            $customerDel = $customerObj::findOne($idFull);
+            if (isset ($customerDel)) {
+                $customerDel->delete();
+            }
+
+        }
+//            print_r ($ids);
+
+//      если вставилось, то вставить все зависимые таблицы
           if ($customerObj->save(true,null,$idVal)) {
               $query=$customerObj->find()->where(['regNumber'=>$regNumber])->limit(1)->one();
               $id=$query['id'];
@@ -44,8 +60,9 @@ class CustomerController extends MyController {
                 $this->area($xmlArray, $factAddressObj);
                 $this->region($xmlArray, $factAddressObj);
                 $this->settlement($xmlArray, $factAddressObj);
-
-              var_dump('стоп'); die;
+               $customerObj->setAttribute('fullRecord', '1');
+               $customerObj->update();
+              print_r (++$i."  ");
           }
             unset($xmlArray, $customerObj);
         }

@@ -24,20 +24,36 @@ class ContractController extends MyController {
 //        втсавить контракты
         $contractObj = new Contract();
         $ids = $contractObj->findBySql('SELECT id FROM contract')->asArray()->all();
+        $idFull = $contractObj->findBySql('SELECT id FROM contract WHERE fullRecord=0')->asArray()->limit(1)->one();
         $idVal = array_column($ids, 'id');
         $contractObj->attributes = $xmlArray ['export']['contract'];
         $contractObj->dateFormat();
         $contractObj->setAttribute('customer', $xmlArray ['export']['contract']['customer']['regNum']);
+//      вставка price
         if (isset($xmlArray ['export']['contract']['priceInfo'])) {
             $contractObj->setAttribute('price', $xmlArray ['export']['contract']['priceInfo']['price']);
         }
+//      вставка singleReason
+        if (isset($xmlArray ['export']['contract']['singleCustomerReason']['id'])) {
+            $contractObj->setAttribute('singlereason_id', $xmlArray ['export']['contract']['singleCustomerReason']['id']);
+        } elseif (isset($xmlArray ['export']['contract']['foundation']['fcsOrder']['order']['singleCustomer']['reason']['code'])) {
+            $contractObj->setAttribute('singlereason_id', $xmlArray ['export']['contract']['foundation']['fcsOrder']['order']['singleCustomer']['reason']['code']);
+        }
+//      вставка responsible_id
+        if (isset($xmlArray ['export']['contract']['placer']['responsibleOrg']['regNum'])) {
+            $contractObj->setAttribute('responsible_id', $xmlArray ['export']['contract']['placer']['responsibleOrg']['regNum']);
+        }
+
+//      если запись неполная то удалить ее
+        if ($contractObj->getAttribute('id') == $idFull['id']) {
+            $contId = $contractObj->getAttribute('id');
+            $contractDel = $contractObj::findOne($idFull);
+            $contractDel->delete();
+        }
 //        если уже есть запись
         if ($contractObj->save(true, NULL, $idVal)) {
-
 //             вставить suppliers
             $suppObj = new supplier();
-
-
 //разные тэги для supplier
             if (isset($xmlArray ['export']['contract']['suppliers']['supplier']['legalEntityRF'])) {
                 $suppObj->attributes = $xmlArray ['export']['contract']['suppliers']['supplier']['legalEntityRF'];
@@ -87,6 +103,9 @@ class ContractController extends MyController {
                 $productObj->save();
                 $productObj->link('contract', $contractObj);
             }
+            //вставить индикатор полной записи
+            $contractObj->setAttribute('fullRecord', '1');
+            $contractObj->update();
         }
 //        var_dump($productObj);
     }
@@ -125,8 +144,9 @@ class ContractController extends MyController {
             array_shift($listZipFiles);
             array_shift($listZipFiles);
             foreach ($listZipFiles as $zipFile) {
+            $starttime = microtime(TRUE);
                 // не работать над отработанными zip файлами
-                if (in_array($zipFile, $listZipFiles)){
+                if (in_array($zipFile, $files)){
                     continue;
                 }
                 print_r($zipFile . "\n");
@@ -137,18 +157,21 @@ class ContractController extends MyController {
                 $numberFiles = count($listFiles);
                 //распарсить все из папки $pathTempFolder
                 foreach ($listFiles as $fileName) {
-                    $starttime = microtime(TRUE);
                     $this->todb($pathTempFolder . $fileName);
+
+
+//                    print_r($fileName."\n");
+                    unlink($pathTempFolder . $fileName);
+                }
                     $endtime = microtime(true);
                     $time = (int) ($endtime - $starttime + 1);
                     $min = (int) ($time / 60);
                     $sec = (int) ($time % 60);
-                    $filesObj->setAttribute('filename', $fileName);
+                    $filesObj->setAttribute('filename', $zipFile);
                     $filesObj->setAttribute('model', "contract");
                     $filesObj->setAttribute('time', "$min м $sec с");
                     $filesObj->save();
-                    unlink($pathTempFolder . $fileName);
-                }
+
             }
         }
     }

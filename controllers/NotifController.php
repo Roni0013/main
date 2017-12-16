@@ -24,12 +24,15 @@ class NotifController extends Controller
     public function actionIndex() {
         $OKPD = new okpd();
         //$spisok=$OKPD->find()->where(['like','code','__', false])->all();
-        $spisok=$OKPD->find()->asArray()->all();
-//        foreach ($spisok as $value) {
-//            $keyval [$value->code] = $value->name;
-//        }
-        
-        return $this->render('okpd', compact('OKPD', 'spisok'));
+        $spisok=$OKPD->find()->where(['like','code','__', FALSE])->asArray()->all();
+//        debug ($spisok);
+        foreach ($spisok as $key=>$value) {
+//        debug ($value);
+            $keyval[$value['code']] = $value['name'];
+        }
+//        debug ($keyval);
+        $this->view->title = 'Заголовок';
+        return $this->render('okpd', compact('OKPD', 'keyval'),['tittle'=>'Название']);
     }
 
     public function actionNotif() {

@@ -20,7 +20,9 @@ AppAsset::register($this);
 
 <div class="wrap container">
     <?= $content  ?>
+
 </div>
+
 
 
 <footer class="footer">
