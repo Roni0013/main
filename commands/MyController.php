@@ -8,7 +8,7 @@
 
 namespace app\commands;
 use yii\console\Controller;
-
+use app\models\files;
 /**
  * Description of MyController
  *
@@ -19,7 +19,7 @@ class MyController extends Controller {
     const FTP_PATH = 'ftp.zakupki.gov.ru';
     const FTP_LOGIN = 'free';
     const FTP_PASSW = 'free';
-
+    public static $autoinc = 1;
 
     public function getXmlArray($xmlText) {
         $xmlObject = new xmlToArrayParser($xmlText);
@@ -32,6 +32,9 @@ class MyController extends Controller {
         $xmltext = file_get_contents($xmlFileName);
         $xmltext = preg_replace('/oos:/', '', $xmltext);
         $xmltext = preg_replace('/ns2:/', '', $xmltext);
+        $xmltext = preg_replace('/<signature>.*?<\/signature>/', '', $xmltext);
+        $xmltext = preg_replace('/<consRegistryNum>.*?<\/consRegistryNum>/', '', $xmltext);
+        $xmltext = preg_replace('/<organizationRole>.*?<\/organizationRole>/', '', $xmltext);
         preg_match_all('/<' . $tag . '>.*?<\/' . $tag . '>/', $xmltext, $xmltextBits);
         return $xmltextBits[0];
     }
@@ -102,6 +105,98 @@ class MyController extends Controller {
         } else {
             echo 'Ошибка FTP';
         }
+    }
+
+    public function actionUpdate() {
+
+        $y=explode('\\',$this->className());
+        $z= array_pop($y);
+        // опрделеить слово contract notification или др. по имени класса
+        $modelName = (strtolower(str_replace('Controller', '', $z)));
+//        $filesObj = new files();
+//        $query=$filesObj->find()->where(['model'=>$modelName])->asArray()->all();
+        $filesFromTable= array_column($query, 'filename');
+//        print_r($files);
+//        foreach (scandir($pathFolder=$this->pathResource()) as $tempFile) {
+
+//            $pathFolder = 'resource/contract/';
+            $pathTempFolder = 'temp/';
+            exec('rm -f temp/*');
+            $listZipFiles = scandir($pathFolder);
+            array_shift($listZipFiles);
+            array_shift($listZipFiles);
+            foreach ($listZipFiles as $zipFile) {
+//                $filesObj = new files();
+                $starttime = microtime(TRUE);
+                // не работать над отработанными zip файлами
+                if (in_array($zipFile, $filesFromTable)) {
+                    continue;
+                }
+                print_r($zipFile . "\n");
+                self::unZip($pathFolder . $zipFile);
+                $listFiles = scandir($pathTempFolder);
+                array_shift($listFiles);
+                array_shift($listFiles);
+                $numberFiles = count($listFiles);
+                //распарсить все из папки $pathTempFolder
+                foreach ($listFiles as $fileName) {
+                    $this->todb($pathTempFolder . $fileName);
+//                    print_r($fileName."\n");
+                    unlink($pathTempFolder . $fileName);
+                }
+                $endtime = microtime(true);
+                $time = (int) ($endtime - $starttime + 1);
+                $min = (int) ($time / 60);
+                $sec = (int) ($time % 60);
+//                $filesObj->setAttribute('filename', $zipFile);
+//                $filesObj->setAttribute('model', $modelName);
+//                $filesObj->setAttribute('time', "$min м $sec с");
+//var_dump($filesObj); die;
+                echo "$zipFile \n";
+//                $filesObj->save();
+//                    die;
+//                unset($filesObj);
+            }
+//        }
+    }
+
+    private static function unZip($fileName, $pathTo = 'temp'){
+        $zip= new \ZipArchive();
+        if ($zip->open($fileName) === TRUE ) {
+            $zip->extractTo($pathTo);
+            $zip->close();
+        }
+    }
+
+    public function getStrVal($values, $intCount=0) {
+        if (self::$autoinc == 1){
+            $stroka = "(";
+        } else {
+            $stroka = ",(";
+        }
+
+        $i=0;
+        foreach ($values as $value) {
+            if ($i>$intCount) {
+                $stroka .= "'" . $value . "',";
+            } else {
+                $stroka .= $value . ",";
+                $i++;
+            }
+        }
+        $stroka = rtrim($stroka, ',');
+        $stroka .= ')';
+        return $stroka;
+    }
+
+    public function getStrFirstLine ($values) {
+        $stroka='(';
+        foreach ($values as $value) {
+            $stroka .= $value . ',';
+        }
+        $stroka = rtrim($stroka, ',');
+        $stroka .= ')';
+        return $stroka;
     }
 
 }

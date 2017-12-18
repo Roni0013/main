@@ -13,6 +13,8 @@ use app\models\okpd;
 use app\models\notification;
 use yii\web\Application;
 use yii\data\Pagination;
+use app\models\customer;
+use Yii;
 /**
  * Description of NotifController
  *
@@ -22,8 +24,13 @@ use yii\data\Pagination;
 class NotifController extends Controller
  {
     public function actionIndex() {
+
         $OKPD = new okpd();
-        //$spisok=$OKPD->find()->where(['like','code','__', false])->all();
+
+
+//        debug ($text);
+
+//$spisok=$OKPD->find()->where(['like','code','__', false])->all();
         $spisok=$OKPD->find()->where(['like','code','__', FALSE])->asArray()->all();
 //        debug ($spisok);
         foreach ($spisok as $key=>$value) {
@@ -57,6 +64,7 @@ class NotifController extends Controller
         return $this->render('notif',compact ('spisok', 'pagination'));
     }
 
+
     public function actionItem() {
         $id=\Yii::$app->request->get();
         $notif = new notification ();
@@ -65,6 +73,20 @@ class NotifController extends Controller
 
         return $this->render('item', compact('query'));
 
+    }
+
+    public function actionComplete() {
+//        debug ('Complete');
+        $get=Yii::$app->request->get();
+
+        $customer = new customer();
+        $data=$customer->find()->select('fullName as value')->where(['like','fullName',$get['term']])->asArray()->limit(100)->all();
+        foreach ($data as $val) {
+            $text[]=$val['value'];
+        }
+//        debug ($text);
+
+        echo \yii\helpers\Json::encode($text);
     }
 
 }

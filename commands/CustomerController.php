@@ -18,8 +18,7 @@ use app\models\files;
  */
 class CustomerController extends MyController {
 
-    public function actionTodb() {
-    $i=0;
+    public function _todb($fileName) {
         $customerObj = new customer;
         //список существующих id
         $ids = $customerObj->findBySql('SELECT regNumber FROM customer')->asArray()->all();
@@ -27,7 +26,7 @@ class CustomerController extends MyController {
 
         unset($customerObj);
         $idVal = array_column($ids, 'regNumber');
-        $xmlTextBits = $this->getXmlBits('1.xml');
+        $xmlTextBits = $this->getXmlBits($fileName);
         foreach ($xmlTextBits as $xmlBit) {
             $customerObj = new customer;
             $factAddressObj = new factualAddress;
@@ -62,12 +61,27 @@ class CustomerController extends MyController {
                 $this->settlement($xmlArray, $factAddressObj);
                $customerObj->setAttribute('fullRecord', '1');
                $customerObj->update();
-              print_r (++$i."  ");
           }
             unset($xmlArray, $customerObj);
         }
         unset ($ids,$idVal);
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     public function getXmlArray($xmlText) {
         $xmlObject = new xmlToArrayParser($xmlText);

@@ -16,26 +16,26 @@ use yii\db\ActiveRecord;
  */
 class customer extends ActiveRecord {
 
-//    public static $id;
-//    public static $regNumber;
-//
-//    public static $shortName;
-//    public static $fullName;
-//    public static $INN;
-//    public static $KPP;
-//    public static $registrationDate;
-//    public static $OGRN;
-//    public static $OKPO;
-//    public static $organizationRole;
-//    public static $subordinationType;
-//    public static $timeZone;
-//    public static $timeZoneUtcOffset;
-//    public static $timeZoneOlson;
-//    public static $actual;
-//    public static $register;
-//    public static $postalAddress;
-//    public static $phone;
-//    public static $fax;
+    public static $id;
+    public static $regNumber;
+
+    public static $shortName;
+    public static $fullName;
+    public static $INN;
+    public static $KPP;
+    public static $registrationDate;
+    public static $OGRN;
+    public static $OKPO;
+    public static $organizationRole;
+    public static $subordinationType;
+    public static $timeZone;
+    public static $timeZoneUtcOffset;
+    public static $timeZoneOlson;
+    public static $actual;
+    public static $register;
+    public static $postalAddress;
+    public static $phone;
+    public static $fax;
 
 
 
@@ -69,6 +69,8 @@ class customer extends ActiveRecord {
     public function getAddress (){
         return $this->hasOne (factualAddress::className(),['id'=>'factualAddress_id'])->inverseOf('customer');
     }
+
+
 
 
 }

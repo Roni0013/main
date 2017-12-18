@@ -52,7 +52,7 @@ $config = [
             'showScriptName' => false,
             'rules' => [
                 ''=>'notif/index',
-                //'<controller:\w+>/<action:\w+>/' => '<controller>/<action>',
+//                '<controller:\w+>/<action:\w+>/' => '<controller>/<action>',
             ],
         ],
 
