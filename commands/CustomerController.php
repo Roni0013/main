@@ -1,139 +1,132 @@
 <?php
 
-namespace app\commands;
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 
-use app\commands\xmlToArrayParser;
+namespace app\commands;
 use app\commands\MyController;
-use app\models\customer;
-use app\models\factualAddress;
-use app\models\area;
-use app\models\region;
-use app\models\settlement;
-use app\models\files;
+use app\models\mycustomer;
+use app\models\myfactualaddress;
+
 
 /**
- * Description of CustomerController
+ * Description of CustController
  *
  * @author roni
  */
-class CustomerController extends MyController {
-
-    public function _todb($fileName) {
-        $customerObj = new customer;
-        //список существующих id
-        $ids = $customerObj->findBySql('SELECT regNumber FROM customer')->asArray()->all();
-        $idFull = $customerObj->findBySql('SELECT regNumber FROM customer WHERE fullRecord=0')->asArray()->limit(1)->one();
-
-        unset($customerObj);
-        $idVal = array_column($ids, 'regNumber');
-        $xmlTextBits = $this->getXmlBits($fileName);
-        foreach ($xmlTextBits as $xmlBit) {
-            $customerObj = new customer;
-            $factAddressObj = new factualAddress;
-            $xmlArray = $this->getXmlArray($xmlBit);
-            $customerObj->attributes = $xmlArray['nsiOrganization'];
-          $regNumber = $customerObj->getAttribute('regNumber');
+class CustController extends MyController{
 
 
-//      если запись неполная то удалить ее
+public function actionTofile ($filename='1.xml',$fileNumber=1){
 
-          if (($customerObj->getAttribute('regNumber')) == ($idFull['regNumber']) and isset ($idFull['regNumber'])) {
-            $contId = $customerObj->getAttribute('regNumber');
-            $customerDel = $customerObj::findOne($idFull);
-            if (isset ($customerDel)) {
-                $customerDel->delete();
+            //получает zip файл    (общее действие)
+            //разбивает на части если нужно         (частное)
+            //записывает данные полей в модель      (частное)
+            //из данных модели формируется файл sql дампа
+//
+            //проверка на обнуление ID первичного ключа
+            if (file_exists('resource/idcurrent/customer')) {
+                self::$autoinc = file_get_contents('resource/idcurrent/customer');
+            } else {
+                 self::$autoinc = 1;
+            }
+            $i = 0;
+
+        //сформировать  имя для customer
+        $sqlFileNameCustomer =  $this->pathDestination()['customer'].$fileNumber.'.sql';
+        //сформировать  имя для factualAddress
+        $sqlFileNameFactAddress =  $this->pathDestination()['factAddress'].$fileNumber.'.sql';
+        //вставка начальных строк  INSERT INTO customer
+        $sqlInsertTextCustomer = "INSERT INTO customer ";
+        //вставка начальных строк  INSERT INTO factualAddress
+        $sqlInsertTextFactAddress = "INSERT INTO factualAddress ";
+
+
+//      разбить файл на части
+        $xmlBits = $this->getXmlBits($filename, 'nsiOrganization');
+//      каждую часть сформировать в ассоциативный массив
+        foreach ($xmlBits as $xBit) {
+            $xmlArray = $this->getXmlArray($xBit);
+
+//          сформировать модель customer из части
+            $xmlCustomer = new mycustomer();
+            $xmlCustomer ->attributes   =$xmlArray['nsiOrganization'];
+            $xmlCustomer->setAttributes(['id' => self::$autoinc]);
+            $xmlCustomer->setAttributes(['factualAddress_id'=>self::$autoinc]);
+            $keysCustomer = $xmlCustomer->getAttributes();
+
+//          сформировать модель factualAddress из части
+
+
+            $factAddressObj = new myfactualaddress;
+            $factAddressObj -> attributes =  $xmlArray['nsiOrganization']['factualAddress'];
+            $factAddressObj -> setAttributes(['id' => self::$autoinc]);
+            if (isset($xmlArray['nsiOrganization']['factualAddress']['settlement']['kladrCode'])) {
+                $factAddressObj -> setAttributes(['kladrCode' => $xmlArray['nsiOrganization']['factualAddress']['settlement']['kladrCode']]);
+            } elseif (isset($xmlArray['nsiOrganization']['factualAddress']['city']['kladrCode'])) {
+                $factAddressObj -> setAttributes(['kladrCode' => $xmlArray['nsiOrganization']['factualAddress']['city']['kladrCode']]);
+            } elseif (isset($xmlArray['nsiOrganization']['factualAddress']['region']['kladrCode'])) {
+                $factAddressObj -> setAttributes(['kladrCode' => $xmlArray['nsiOrganization']['factualAddress']['region']['kladrCode']]);
+            }
+            $keysFactAddress = $factAddressObj->getAttributes();
+//            print_r ($keysFactAddress); die;
+
+
+//          если вставлена первая строка то больше не надо
+            if (!self::$isFirst) {
+                $firstLineCustomer=$this->getStrFirstLine(array_keys($keysCustomer));
+                $firstLineFactAddress=$this->getStrFirstLine(array_keys($keysFactAddress));
+
+                $this->putToFile($sqlFileNameCustomer, $sqlInsertTextCustomer . $firstLineCustomer . ' VALUES ');
+                $this->putToFile($sqlFileNameFactAddress, $sqlInsertTextFactAddress . $firstLineFactAddress . ' VALUES ');
+
             }
 
+            $lineCustomer = $this->getStrVal($keysCustomer, 7);  //количество целых в начале строки VALUES (,,,)
+            $lineFactAddress = $this->getStrVal($keysFactAddress, 2);  //количество целых в начале строки VALUES (,,,)
+                self::$isFirst = true;
+
+            $this->putToFile($sqlFileNameCustomer, $lineCustomer);
+            $this->putToFile($sqlFileNameFactAddress, $lineFactAddress);
+
+
+            self::$autoinc++;
+            $i++;
+//            echo "$i  ";
         }
-//            print_r ($ids);
-
-//      если вставилось, то вставить все зависимые таблицы
-          if ($customerObj->save(true,null,$idVal)) {
-              $query=$customerObj->find()->where(['regNumber'=>$regNumber])->limit(1)->one();
-              $id=$query['id'];
-                $factAddressObj->attributes =  $xmlArray['nsiOrganization']['factualAddress'];
-
-                $factAddressObj->save();
-                $factAddressObj->link('customer', $customerObj);
-                // втсавка связанных данных в area region
-                $this->area($xmlArray, $factAddressObj);
-                $this->region($xmlArray, $factAddressObj);
-                $this->settlement($xmlArray, $factAddressObj);
-               $customerObj->setAttribute('fullRecord', '1');
-               $customerObj->update();
-          }
-            unset($xmlArray, $customerObj);
-        }
-        unset ($ids,$idVal);
+        //в конце файла ;
+        $this->putToFile($sqlFileNameCustomer, ';');
+        $this->putToFile($sqlFileNameFactAddress, ';');
+//      запомнить в фале текущий id
+        file_put_contents('resource/idcurrent/customer', self::$autoinc);
+//        self::$isFirst=FALSE;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public function getXmlArray($xmlText) {
-        $xmlObject = new xmlToArrayParser($xmlText);
-        $xmlArray = $xmlObject->array;
-        unset($xmlObject);
-        return $xmlArray;
-    }
-
-    public function getXmlBits($xmlFileName,$tag='') {
-        $xmltext = file_get_contents($xmlFileName);
-        $xmltext = preg_replace('/oos:/', '', $xmltext);
-        $xmltext = preg_replace('/ns2:/', '', $xmltext);
-        $xmltext = preg_replace('/<signature>.*?<\/signature>/', '', $xmltext);
-        $xmltext = preg_replace('/<consRegistryNum>.*?<\/consRegistryNum>/', '', $xmltext);
-        $xmltext = preg_replace('/<organizationRole>.*?<\/organizationRole>/', '', $xmltext);
-        preg_match_all('/<nsiOrganization>.*?<\/nsiOrganization>/', $xmltext, $xmltextBits);
-        return $xmltextBits[0];
-    }
-
-    public function area($xmlBit, $addrObj) {
-        if (isset ($xmlBit['nsiOrganization']['factualAddress']['area'])) {
-            $areaObj = new area();
-            $areaObj->attributes = $xmlBit['nsiOrganization']['factualAddress']['area'];
-            $areaObj->save();
-            $areaObj->link('factualAddress',$addrObj);
-        }
-
-    }
-
-    public function region($xmlBit, $addrObj) {
-        if (isset($xmlBit['nsiOrganization']['factualAddress']['region'])) {
-            $regionObj = new region();
-            $regionObj->attributes = $xmlBit['nsiOrganization']['factualAddress']['region'];
-            $regionObj->save();
-            $regionObj->link('factualAddress', $addrObj);
-        }
-    }
-
-    public function settlement($xmlBit, $addrObj) {
-        if (isset($xmlBit['nsiOrganization']['factualAddress']['settlement'])) {
-            $settlementObj = new settlement();
-            $settlementObj->attributes = $xmlBit['nsiOrganization']['factualAddress']['settlement'];
-            $settlementObj->save();
-            $settlementObj->link('factualAddress', $addrObj);
-        }
-    }
-
-    public function path() {
+     public function path() {
         return 'fcs_nsi/nsiOrganization/';
     }
-
+    //источник файлов ZIP для контроллера
     public function pathResource (){
         return 'resource/customer/';
     }
+
+    //еще добавляется номер файла и .sql  (для таблиц)
+    public function pathDestination() {
+        return [
+            'customer'=>'files/customer/customer',
+            'factAddress' => 'files/factAddress/factAddress'
+            ];
+    }
+
+    public function resetFiles() {
+        if (file_exists('resource/idcurrent/customer')) {
+            unlink('resource/idcurrent/customer');
+        }
+        exec('rm -f files/customer/*');
+        exec('rm -f files/factAddress/*');
+    }
+
 }

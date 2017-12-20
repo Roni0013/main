@@ -25,6 +25,7 @@ class NotifController extends Controller
  {
     public function actionIndex() {
 
+//        phpinfo(); die;
         $OKPD = new okpd();
 
 

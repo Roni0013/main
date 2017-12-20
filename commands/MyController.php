@@ -9,6 +9,7 @@
 namespace app\commands;
 use yii\console\Controller;
 use app\models\files;
+use yii\helpers\Html;
 /**
  * Description of MyController
  *
@@ -19,23 +20,28 @@ class MyController extends Controller {
     const FTP_PATH = 'ftp.zakupki.gov.ru';
     const FTP_LOGIN = 'free';
     const FTP_PASSW = 'free';
-    public static $autoinc = 1;
+    public static $autoinc ;
+    public static $isFirst = FALSE;
+//    public static $fileNumber = 1;
 
     public function getXmlArray($xmlText) {
         $xmlObject = new xmlToArrayParser($xmlText);
         $xmlArray = $xmlObject->array;
+
         unset($xmlObject);
         return $xmlArray;
     }
 
     public function getXmlBits($xmlFileName, $tag='') {
-        $xmltext = file_get_contents($xmlFileName);
-        $xmltext = preg_replace('/oos:/', '', $xmltext);
-        $xmltext = preg_replace('/ns2:/', '', $xmltext);
-        $xmltext = preg_replace('/<signature>.*?<\/signature>/', '', $xmltext);
-        $xmltext = preg_replace('/<consRegistryNum>.*?<\/consRegistryNum>/', '', $xmltext);
-        $xmltext = preg_replace('/<organizationRole>.*?<\/organizationRole>/', '', $xmltext);
-        preg_match_all('/<' . $tag . '>.*?<\/' . $tag . '>/', $xmltext, $xmltextBits);
+        $xmltext1 = file_get_contents($xmlFileName);
+        $xmltext2 = preg_replace('/oos:/', '', $xmltext1);
+        $xmltext3 = preg_replace('/ns2:/', '', $xmltext2);
+        $xmltext4 = preg_replace('/<signature>.*?<\/signature>/', '', $xmltext3);
+        $xmltext5 = preg_replace('/<consRegistryNum>.*?<\/consRegistryNum>/', '', $xmltext4);
+        $xmltext6 = preg_replace('/<organizationRole>.*?<\/organizationRole>/', '', $xmltext5);
+        $xmltext7 = preg_replace('/&apos/', '', $xmltext6);
+        preg_match_all('/<' . $tag . '>.*?<\/' . $tag . '>/', $xmltext7, $xmltextBits);
+//        print_r ($xmltextBits);
         return $xmltextBits[0];
     }
 
@@ -107,57 +113,41 @@ class MyController extends Controller {
         }
     }
 
-    public function actionUpdate() {
-
-        $y=explode('\\',$this->className());
-        $z= array_pop($y);
-        // опрделеить слово contract notification или др. по имени класса
-        $modelName = (strtolower(str_replace('Controller', '', $z)));
-//        $filesObj = new files();
-//        $query=$filesObj->find()->where(['model'=>$modelName])->asArray()->all();
-        $filesFromTable= array_column($query, 'filename');
-//        print_r($files);
-//        foreach (scandir($pathFolder=$this->pathResource()) as $tempFile) {
-
-//            $pathFolder = 'resource/contract/';
-            $pathTempFolder = 'temp/';
-            exec('rm -f temp/*');
-            $listZipFiles = scandir($pathFolder);
-            array_shift($listZipFiles);
-            array_shift($listZipFiles);
-            foreach ($listZipFiles as $zipFile) {
-//                $filesObj = new files();
-                $starttime = microtime(TRUE);
-                // не работать над отработанными zip файлами
-                if (in_array($zipFile, $filesFromTable)) {
-                    continue;
-                }
-                print_r($zipFile . "\n");
-                self::unZip($pathFolder . $zipFile);
-                $listFiles = scandir($pathTempFolder);
-                array_shift($listFiles);
-                array_shift($listFiles);
-                $numberFiles = count($listFiles);
-                //распарсить все из папки $pathTempFolder
-                foreach ($listFiles as $fileName) {
-                    $this->todb($pathTempFolder . $fileName);
-//                    print_r($fileName."\n");
-                    unlink($pathTempFolder . $fileName);
-                }
-                $endtime = microtime(true);
-                $time = (int) ($endtime - $starttime + 1);
-                $min = (int) ($time / 60);
-                $sec = (int) ($time % 60);
-//                $filesObj->setAttribute('filename', $zipFile);
-//                $filesObj->setAttribute('model', $modelName);
-//                $filesObj->setAttribute('time', "$min м $sec с");
-//var_dump($filesObj); die;
-                echo "$zipFile \n";
-//                $filesObj->save();
-//                    die;
-//                unset($filesObj);
+    public function actionUpdate($parametr = '') {
+        if ($parametr == '1') {
+            $this->resetFiles();         //для каждого контроллера свой сброс
+        }
+        $pathFolder = $this->pathResource();
+        $pathTempFolder = 'temp/';
+        exec('rm -f temp/*');
+        $listZipFiles = scandir($pathFolder);
+        $currentIndexZip = 1;
+        $allZips = count($listZipFiles);
+        array_shift($listZipFiles);
+        array_shift($listZipFiles);
+        $fileNumber = 1;
+        foreach ($listZipFiles as $zipFile) {
+//                print_r($zipFile . "\n");
+            self::unZip($pathFolder . $zipFile);
+//                self::unZip($pathFolder.$zipFile);
+            $listFiles = scandir($pathTempFolder);
+            array_shift($listFiles);
+            array_shift($listFiles);
+//                $numberFiles = count($listFiles);
+            //распарсить все из папки $pathTempFolder
+            foreach ($listFiles as $fileName) {
+//                    $this->tofile($pathTempFolder.$fileName);
+                $commandTofile = "php yii cust/tofile $pathTempFolder$fileName $fileNumber";
+                print_r($commandTofile);
+//                    print_r($commandTofile."\n");
+                exec($commandTofile);
+                unlink($pathTempFolder . $fileName);
             }
-//        }
+            echo "   вставлен \n";
+            $currentIndexZip++;
+            $fileNumber++;
+        }
+        $this->putToFile($this->pathDestination(), ';');
     }
 
     private static function unZip($fileName, $pathTo = 'temp'){
@@ -166,26 +156,32 @@ class MyController extends Controller {
             $zip->extractTo($pathTo);
             $zip->close();
         }
+        unset ($zip);
     }
 
-    public function getStrVal($values, $intCount=0) {
-        if (self::$autoinc == 1){
-            $stroka = "(";
+    public function getStrVal($values, $intCount = 0) {
+        if (!self::$isFirst) {
+            $stroka = " (";
         } else {
-            $stroka = ",(";
+            $stroka = ", \n (";
         }
 
-        $i=0;
+        $i = 1;
         foreach ($values as $value) {
-            if ($i>$intCount) {
-                $stroka .= "'" . $value . "',";
-            } else {
-                $stroka .= $value . ",";
-                $i++;
+            if (!is_array($value)) {
+                if ($value == '') {
+                    $value = 'NULL';
+                }
+                if (($i > $intCount) and ( $value <> 'NULL')) {
+                    $stroka .= "'" . $value . "',";
+                } else {
+                    $stroka .= $value . ",";
+                    $i++;
+                }
             }
         }
         $stroka = rtrim($stroka, ',');
-        $stroka .= ')';
+        $stroka .= ")";
         return $stroka;
     }
 
@@ -199,4 +195,23 @@ class MyController extends Controller {
         return $stroka;
     }
 
+    public function putToFile($fileName, $valuesLine) {
+        if (!file_put_contents($fileName, $valuesLine, FILE_APPEND)) {
+            die('ошибка записи');
+
+        }
+    }
+
+    public function pathDestination() {
+        return '';
+    }
+
+    public function pathResource (){
+        return '';
+    }
+
+    //удалить временный файл, обнулить id
+    public function resetFiles() {
+
+    }
 }
