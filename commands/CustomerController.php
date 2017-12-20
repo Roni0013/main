@@ -87,7 +87,7 @@ public function actionTofile ($filename='1.xml',$fileNumber=1){
 
             $lineCustomer = $this->getStrVal($keysCustomer, 7);  //количество целых в начале строки VALUES (,,,)
             $lineFactAddress = $this->getStrVal($keysFactAddress, 2);  //количество целых в начале строки VALUES (,,,)
-                self::$isFirst = true;
+            self::$isFirst = true;
 
             $this->putToFile($sqlFileNameCustomer, $lineCustomer);
             $this->putToFile($sqlFileNameFactAddress, $lineFactAddress);

@@ -10,6 +10,7 @@ namespace app\commands;
 use yii\console\Controller;
 use app\models\files;
 use yii\helpers\Html;
+
 /**
  * Description of MyController
  *
@@ -39,7 +40,8 @@ class MyController extends Controller {
         $xmltext4 = preg_replace('/<signature>.*?<\/signature>/', '', $xmltext3);
         $xmltext5 = preg_replace('/<consRegistryNum>.*?<\/consRegistryNum>/', '', $xmltext4);
         $xmltext6 = preg_replace('/<organizationRole>.*?<\/organizationRole>/', '', $xmltext5);
-        $xmltext7 = preg_replace('/&apos/', '', $xmltext6);
+
+        $xmltext7 = preg_replace('/&apos;/', '', $xmltext6);
         preg_match_all('/<' . $tag . '>.*?<\/' . $tag . '>/', $xmltext7, $xmltextBits);
 //        print_r ($xmltextBits);
         return $xmltextBits[0];
@@ -114,6 +116,9 @@ class MyController extends Controller {
     }
 
     public function actionUpdate($parametr = '') {
+        $request = \yii::$app->request->getParams()[0];
+        $paramToExec= str_replace('update', 'tofile', $request);
+
         if ($parametr == '1') {
             $this->resetFiles();         //для каждого контроллера свой сброс
         }
@@ -137,13 +142,15 @@ class MyController extends Controller {
             //распарсить все из папки $pathTempFolder
             foreach ($listFiles as $fileName) {
 //                    $this->tofile($pathTempFolder.$fileName);
-                $commandTofile = "php yii cust/tofile $pathTempFolder$fileName $fileNumber";
-                print_r($commandTofile);
-//                    print_r($commandTofile."\n");
+                $commandTofile = "php yii $paramToExec $pathTempFolder$fileName $fileNumber";
+                    print_r($commandTofile."\n");
                 exec($commandTofile);
                 unlink($pathTempFolder . $fileName);
             }
             echo "   вставлен \n";
+
+//            die;
+
             $currentIndexZip++;
             $fileNumber++;
         }

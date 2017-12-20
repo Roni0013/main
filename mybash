@@ -1,0 +1,3 @@
+#!/bin/bash
+$file = ls resource/customer/
+echo $file
