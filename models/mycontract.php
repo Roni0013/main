@@ -7,19 +7,22 @@
  */
 
 namespace app\models;
-use yii\base\Model;
+use app\models\baseXmlSql;
 /**
  * Description of mycontract
  *
  * @author roni
  */
-class mycontract extends Model{
+class mycontract extends baseXmlSql{
     public $id;
     public $regNum;
     public $price;
-    public $supplier_id;
+//    public $price2;
+    public $supplierInn;
     public $customer;
     public $singlereason_id;
+    public $sqlfilenumber;
+
 
 
     public $number;
@@ -30,39 +33,65 @@ class mycontract extends Model{
     public $currentContractStage;
     public $protocolDate;
     public $documentBase;
+    public $responsible_id;
+
 
     public function rules() {
         return [
             [['id', 'regNum',
-            'price', 'supplier_id', 'customer', 'singlereason_id', 'number',
+            'price',
+//                'price2',
+                'supplier_id', 'customer', 'singlereason_id', 'number',
             'signDate', 'publishDate','versionNumber', 'href',
-            'currentContractStage', 'protocolDate', 'documentBase'], 'safe']
+            'currentContractStage', 'protocolDate', 'documentBase','sqlfilenumber','supplierInn'], 'safe']
         ];
     }
 
+    public static function tableSql() {
+        return 'contract';
+    }
 
-    public function dateFormat() {
-        $pattern = '/^\d{4}-\d{2}-\d{2}/';
-        $attrs = $this->getAttributes();
+    public static function intValues() {
+        return 7;
+    }
 
-        if (isset($attrs['publishDate'])) {
-            preg_match($pattern, $attrs['publishDate'], $resMatch1);
+    public function xrules() {
+        return [
+          'id'=>['export/contract/id'],
+          'regNum'=>['export/contract/regNum'],
+          'price'=>['export/contract/priceInfo/price', 'export/contract/price'],
+          'supplierInn'=>['export/contract/suppliers/supplier/legalEntityRF/INN', 'export/contract/suppliers/supplier/inn',
+                            'export/contract/suppliers/individualPersonRF'],
+          'customer'=>['export/contract/customer/regNum'],
+          'singlereason_id'=>['export/contract/singleCustomerReason/id','export/contract/foundation/fcsOrder/order/singleCustomer/reason/code'],
+          'sqlfilenumber'=>[$this->sqlfilenumber],
+          'singlereason_id'=>['export/contract/singleCustomerReason/id'],
+          'number'=>['export/contract/number'],
+          'signDate'=>['export/contract/signDate'],
+          'publishDate'=>['export/contract/publishDate'],
+          'versionNumber'=>['export/contract/versionNumber'],
+          'href'=>['export/contract/href'],
+          'currentContractStage'=>['export/contract/currentContractStage'],
+          'protocolDate'=>['export/contract/protocolDate'],
+          'documentBase'=>['export/contract/documentBase'],
+          'responsible_id'=>['export/contract/placer/responsibleOrg/regNum','export/contract/'],
+
+        ];
+    }
+
+    public function replace($key, $text) {
+        if (($key == 'publishDate') or ($key == 'signDate') or ($key == 'protocolDate')) {
+            $pattern = '/^\d{4}-\d{2}-\d{2}/';
+//            print_r($key . '  '. $text);
+            preg_match($pattern, $text, $resMatch);
+//            print_r($resMatch)[0]; sleep (1);
+            if (isset ($resMatch[0])) {
+                return $resMatch[0];
+            }else {
+                return '';
+            }
         }
-        if (isset($attrs['signDate'])) {
-            preg_match($pattern, $attrs['signDate'], $resMatch2);
-        }
-        if (isset($attrs['protocolDate'])) {
-            preg_match($pattern, $attrs['protocolDate'], $resMatch3);
-        }
-        if (isset($resMatch1)) {
-        $this->setAttributes(['publishDate' => $resMatch1[0]]);
-        }
-        if (isset($resMatch2)) {
-        $this->setAttributes(['signDate' => $resMatch2[0]]);
-        }
-        if (isset($resMatch3)) {
-        $this->setAttributes(['protocolDate' => $resMatch3[0]]);
-        }
+        return trim($text);
     }
 
 

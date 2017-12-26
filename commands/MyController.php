@@ -9,8 +9,8 @@
 namespace app\commands;
 use yii\console\Controller;
 use app\models\files;
-use yii\helpers\Html;
-
+use app\models\filestodb;
+use app\models\sqlfromzip;
 /**
  * Description of MyController
  *
@@ -28,22 +28,28 @@ class MyController extends Controller {
     public function getXmlArray($xmlText) {
         $xmlObject = new xmlToArrayParser($xmlText);
         $xmlArray = $xmlObject->array;
-
         unset($xmlObject);
         return $xmlArray;
     }
 
-    public function getXmlBits($xmlFileName, $tag='') {
-        $xmltext1 = file_get_contents($xmlFileName);
-        $xmltext2 = preg_replace('/oos:/', '', $xmltext1);
-        $xmltext3 = preg_replace('/ns2:/', '', $xmltext2);
-        $xmltext4 = preg_replace('/<signature>.*?<\/signature>/', '', $xmltext3);
-        $xmltext5 = preg_replace('/<consRegistryNum>.*?<\/consRegistryNum>/', '', $xmltext4);
-        $xmltext6 = preg_replace('/<organizationRole>.*?<\/organizationRole>/', '', $xmltext5);
+    public function getXmlBits($xmlText, $tag='') {
+        
+        $xmltextBits = [];
+        $xmlText = preg_replace('/oos:/', '', $xmlText);
+        $xmlText = preg_replace('/ns2:/', '', $xmlText);
+        $xmlText = preg_replace('/<signature>.*?<\/signature>/', '', $xmlText);
+        $xmlText = preg_replace('/<consRegistryNum>.*?<\/consRegistryNum>/', '', $xmlText);
+        $xmlText = preg_replace('/<organizationRole>.*?<\/organizationRole>/', '', $xmlText);
 
-        $xmltext7 = preg_replace('/&apos;/', '', $xmltext6);
-        preg_match_all('/<' . $tag . '>.*?<\/' . $tag . '>/', $xmltext7, $xmltextBits);
-//        print_r ($xmltextBits);
+        $xmlText = preg_replace('/&apos;/', '', $xmlText);
+        $xmlText = preg_replace('/\'/', '"', $xmlText);
+        $xmlText = preg_replace('#\#', '"', $xmlText);
+
+        preg_match_all('/(?s)<' . $tag . '>.*?<\/' . $tag . '>/', $xmlText, $xmltextBits);
+//        print_r ($xmltextBits[0]); die;
+//        $kol=preg_match_all('/(?sx)<product>.*? rodu/', $xmlText, $xmltextBits);
+//        print_r ($kol);
+//        print_r ($xmltextBits); die;
         return $xmltextBits[0];
     }
 
@@ -61,6 +67,10 @@ class MyController extends Controller {
         return '';
     }
 
+    public function manyActions () {
+        return [];
+    }
+
     protected function openFTP() {
         $urlFtp = self::FTP_PATH;
         print_r($urlFtp . "\n");
@@ -71,90 +81,133 @@ class MyController extends Controller {
 
      public function actionCopyfiles() {
         $ftpHandle = $this->openFTP();
-
-        if (($ftpHandle) and ( ftp_login($ftpHandle, self::FTP_LOGIN, self::FTP_PASSW))) {
-            echo "Соединились\n";
-            $listFtpFiles[] = ftp_nlist($ftpHandle, $this->path());
-            $listFtpFiles[] = ftp_nlist($ftpHandle, $this->path() . 'currMonth/');
-            $listFtpFiles[] = ftp_nlist($ftpHandle, $this->path() . 'prevMonth/');
-//            print_r ($this->path()."\n");
-//            print_r ($this->path() . "currMonth\n");
-//            print_r ($this->path() . "prevMonth\n");
-//            die;
-          echo "списки файлов получены \n";
-//          создает новую папку
-            if (!is_dir($this->pathResource())) {
-                mkdir($this->pathResource());
-                echo "папка создана\n";
-            } else {
-                echo "папка существует \n";
-            }
-//          все папки
-            foreach ($listFtpFiles as $list) {
-//          все файлы
-                foreach ($list as $ftpFullName) {
-                    if ((basename($ftpFullName) == 'currMonth') or ( basename($ftpFullName) == 'prevMonth')) {
-                        continue;
-                    }
-                    $fileName = basename($ftpFullName);
-                    $pathTo = $this->pathResource() . $fileName;
-//                    print_r($fileName."\n");
-                    if (file_exists($pathTo) and ( ftp_size($ftpHandle, $ftpFullName) == filesize($pathTo))) {
-                        continue;
+//      перечислить адреса для каждой таблицы
+        foreach ($this->path() as $keyPath=>$valuePath) {
+                if (($ftpHandle) and ( ftp_login($ftpHandle, self::FTP_LOGIN, self::FTP_PASSW))) {
+                    echo "Соединились\n";
+                    $listFtpFiles[$keyPath][] = ftp_nlist($ftpHandle, $valuePath);
+                    $listFtpFiles[$keyPath][] = ftp_nlist($ftpHandle, $valuePath . 'currMonth/');
+                    $listFtpFiles[$keyPath][] = ftp_nlist($ftpHandle,$valuePath . 'prevMonth/');
+        //            print_r ($this->path()."\n");
+        //            print_r ($this->path() . "currMonth\n");
+        //            print_r ($this->path() . "prevMonth\n");
+                  echo "списки файлов получены \n";
+        //          создает новую папку
+                    if (!is_dir($this->pathResource()[$keyPath])) {
+                        mkdir($this->pathResource()[$keyPath]);
+                        echo "папка создана\n";
                     } else {
-                        if (ftp_get($ftpHandle, $pathTo, $ftpFullName,FTP_ASCII)) {
-                            echo "$fileName скопирован \n";
-                        } else {
-                            echo "$fileName не скопирован \n";
+                        echo "папка существует \n";
+                    }
+        //          все папки
+                    foreach ($listFtpFiles[$keyPath] as $list) {
+        //          все файлы
+                        foreach ($list as $ftpFullName) {
+                            if ((basename($ftpFullName) == 'currMonth') or ( basename($ftpFullName) == 'prevMonth')) {
+                                continue;
+                            }
+                            $fileName = basename($ftpFullName);
+                            $pathTo = $this->pathResource()[$keyPath] . $fileName;
+        //                    print_r($fileName."\n");
+        //                    $remoteSize = ftp_size($ftpHandle, $ftpFullName);
+        //                    $localSize =filesize($pathTo);
+                            if (file_exists($pathTo) and ( ftp_size($ftpHandle, $ftpFullName) === filesize($pathTo))) {
+        //                        echo "   отказ \n";
+                                continue;
+                            } else {
+        //                        echo "удаленный размер $remoteSize ==  $localSize";
+                                if (ftp_get($ftpHandle, $pathTo, $ftpFullName,FTP_BINARY)) {
+                                    echo "$fileName скопирован \n";
+                                } else {
+                                    echo "$fileName не скопирован \n";
+                                }
+                            }
                         }
                     }
+                } else {
+                    echo 'Ошибка FTP';
                 }
-            }
-        } else {
-            echo 'Ошибка FTP';
         }
     }
 
-    public function actionUpdate($parametr = '') {
+    public function actionUpdate($tableName = '', $parametr = '') {
         $request = \yii::$app->request->getParams()[0];
-        $paramToExec= str_replace('update', 'tofile', $request);
-
+        if (!isset($paramToExec)) {
+            $paramToExec= str_replace('update', 'tofile', $request);
+        }
+        if (empty($tableName)) {
+            echo "Укажите название таблицы \n";
+            print_r (array_keys($this->pathDestination()));
+            die;
+        }
+        $className = substr($paramToExec,0, strpos($paramToExec, '/'));
+//        print_r($tableName);
         if ($parametr == '1') {
-            $this->resetFiles();         //для каждого контроллера свой сброс
+            echo "Внимание!!! Будет произведен сброс через 5 секунд!!! \n";
+//            sleep(5);
+            $this->resetFiles($tableName);         //для каждого контроллера и таблицы свой сброс
+            files::deleteAll(['tablename'=>$tableName]);
+            $fileObj = new files();
+            $fileObj->setAttributes(['tablename' => $tableName,'number'=>'0']);
+            $fileObj->save();
+            unset ($fileObj);
+
         }
-        $pathFolder = $this->pathResource();
-        $pathTempFolder = 'temp/';
-        exec('rm -f temp/*');
-        $listZipFiles = scandir($pathFolder);
-        $currentIndexZip = 1;
-        $allZips = count($listZipFiles);
-        array_shift($listZipFiles);
-        array_shift($listZipFiles);
-        $fileNumber = 1;
-        foreach ($listZipFiles as $zipFile) {
-//                print_r($zipFile . "\n");
-            self::unZip($pathFolder . $zipFile);
-//                self::unZip($pathFolder.$zipFile);
-            $listFiles = scandir($pathTempFolder);
-            array_shift($listFiles);
-            array_shift($listFiles);
-//                $numberFiles = count($listFiles);
-            //распарсить все из папки $pathTempFolder
-            foreach ($listFiles as $fileName) {
-//                    $this->tofile($pathTempFolder.$fileName);
-                $commandTofile = "php yii $paramToExec $pathTempFolder$fileName $fileNumber";
+        $query = files::find()->where(['tablename'=>$tableName])->asArray()->all();
+//      список zip файлов из таблицы
+        $zipsFilesCache= array_column($query, 'zipfile');
+        $numbers= array_column($query, 'number');
+//        print_r ($numbers); die;
+//        определение начального номера файла для sql файлов
+        if (!empty($numbers) and (is_array(($numbers)))) {
+            $fileNumber = max ($numbers)+1;
+        } else {
+            $fileNumber =1;
+        }
+        if ($fileNumber == 0) $fileNumber = 1;
+//            echo "$tableName"; die;
+            $pathFolder=$this->pathResource()[$tableName];
+
+            $pathTempFolder = 'temp/';
+
+
+            $listZipFiles = scandir($pathFolder);
+            $currentIndexZip = 1;
+            $allZips = count($listZipFiles);
+            array_shift($listZipFiles);
+            array_shift($listZipFiles);
+    //        перебрать zip файлы
+            foreach ($listZipFiles as $zipFile) {
+    //          если zip файл уже есть в кэш таблицы то continue
+                if ((isset($zipsFilesCache)) and (in_array($zipFile, $zipsFilesCache))) {
+                    continue;
+                }
+
+                //удалить sql файл под номером $fileNumber
+                $this->delSqlFile($tableName, $fileNumber);
+                exec('rm -f temp/*');
+                self::unZip($pathFolder . $zipFile);
+                $startTime = microtime(TRUE);
+                    $commandTofile = "php yii $className/$tableName $fileNumber";
                     print_r($commandTofile."\n");
-                exec($commandTofile);
-                unlink($pathTempFolder . $fileName);
+                    exec($commandTofile);
+                $endTime = microtime(TRUE);
+                $time = ($endTime - $startTime);
+                $sec=$time % 60 ;
+                $min = (int)($time /60);
+                echo " $tableName.sql создан из $zipFile  за $min минут $sec секунд \n";
+                // запомнить zip файл
+                $fileObj= new files;
+                $fileObj->setAttributes(['tablename'=> $tableName,'zipfile'=>$zipFile,'number'=>$fileNumber ]);
+                $fileObj->save();
+                unset ($fileObj);
+    //            echo "$zipFile    $className.$fileNumber.sql";
+
+                $currentIndexZip++;
+                $fileNumber++;
             }
-            echo "   вставлен \n";
-
-//            die;
-
-            $currentIndexZip++;
-            $fileNumber++;
-        }
-        $this->putToFile($this->pathDestination(), ';');
+//        $pathDest=$this->pathDestination();
+//        $this->putToFile($pathDest, ';');
     }
 
     private static function unZip($fileName, $pathTo = 'temp'){
@@ -218,7 +271,95 @@ class MyController extends Controller {
     }
 
     //удалить временный файл, обнулить id
-    public function resetFiles() {
+    public function resetFiles($tableName) {
 
     }
+    //удалить не доработанный sql файл
+    public function delSqlFile($tableName,$number) {
+
+    }
+//    удалить дубликаты записей с номером $number из таблицы $tablename
+    public function delDoubleIds($tablename, $number) {
+    }
+
+    public function textArrays() {
+        $fileNames = scandir('temp');
+        array_shift($fileNames);
+        array_shift($fileNames);
+//        заполнить массив xmlBits
+        $xmlBits = [];
+        foreach ($fileNames as $fileName) {
+            $xmlBits[] = $this->getXmlArray ('temp/'.$fileName);
+        }
+//        print_r ($xmlBits); die;
+        return $xmlBits;
+    }
+
+
+    //вставка sql файлов в БД
+    public function actionTodb($tableName = '',$parametr = 0) {
+        $request = \yii::$app->request->getParams()[0];
+        $className = substr($request, 0, strpos($request, '/'));
+        if (empty($tableName)) {
+            echo "Укажите название таблицы \n";
+            print_r (array_keys($this->pathDestination()));
+            die;
+        }
+//        $tableNames = array_keys($this->pathDestination());
+//        sort ($tableNames);
+        //если один, то обнулить таблицу filestodb удалить все записи из БД
+        if ($parametr == 1) {
+//            foreach ($tableNames as $tableName) {
+                filestodb::deleteAll(['tablename' => $tableName]);
+//            }
+        }
+//        для каждой таблицы
+//        foreach ($tableNames as $tableName) {
+            $dbConfig = \yii::$app->db;
+            $user = $dbConfig->username;
+            $passwd = $dbConfig->password;
+            $dbName = substr($dbConfig->dsn, strrpos($dbConfig->dsn, '=') + 1);
+//            echo "$dbName"; die;
+            //      взять все номера файлов из zip таблицы которые обработаны
+            $queryNumber = files::find()->where(['tablename' => $tableName])->asArray()->all();
+            //      список zip файлов из таблицы
+            $sqlNumberCache = array_column($queryNumber, 'number');
+            if (!isset($sqlNumberCache)) {
+                echo "Вставлять нечего \n";
+                exit;
+            }
+            //       взять все номера  файлов, которые уже вставлены в БД
+            $queryBd = filestodb::find()->where(['tablename' => $tableName])->asArray()->all();
+
+            $sqlFilesDb = array_column($queryBd, 'number');
+            //найти разницу в массивах
+            $sqlDiffFiles = array_diff($sqlNumberCache, $sqlFilesDb);
+            if (!isset($sqlDiffFiles)) {
+                echo "Вставлять нечего \n";
+                exit;
+            }
+            sort($sqlDiffFiles);
+//            print_r ($sqlDiffFiles); die;
+            //      всю эту разницу вставить в БД
+            foreach ($sqlDiffFiles as $sqlNumb) {
+                //перед вставкой удалить все записи с данным номером файла $sqlNumb
+                $this->delDoubleIds($tableName, $sqlNumb);
+                $fileTodb = new filestodb();
+                //       сформировать путь до sql файла
+                $pathExec = dirname($this->pathDestination()[$tableName]) . '/' . $tableName . $sqlNumb . '.sql';
+                if (file_exists($pathExec)) {
+                    $command = "mysql -u $user -p$passwd $dbName < $pathExec";
+                    echo "Вставка $tableName$sqlNumb.sql";
+                    exec($command);
+                    $fileTodb->setAttributes(['tablename' => $tableName, 'number' => $sqlNumb]);
+                    $fileTodb->save();
+                    unset($fileTodb);
+//                      print_r ($command ."\n");
+//
+                }
+            }
+//        }
+    }
+
 }
+

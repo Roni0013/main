@@ -17,7 +17,7 @@ class files extends ActiveRecord{
 
     public function rules() {
         return [
-          [['model','filename','time',]  , 'safe']
+          [['model','zipfile','number','tablename']  , 'safe']
         ];
     }
 

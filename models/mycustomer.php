@@ -24,6 +24,7 @@ class mycustomer extends Model{
     public  $subordinationType;
     public  $timeZone;
     public  $regNumber;
+    public  $factualAddress_id;
 
 
 
@@ -52,7 +53,7 @@ class mycustomer extends Model{
             'OGRN', 'OKPO',
 //                'organizationRole',
                 'subordinationType', 'timeZone',
-            'timeZoneUtcOffset', 'timeZoneOlson', 'actual', 'register', 'postalAddress', 'phone', 'fax'], 'safe']
+            'timeZoneUtcOffset', 'timeZoneOlson', 'actual', 'register', 'postalAddress', 'phone', 'fax','factualAddress_id'], 'safe']
         ];
     }
 }

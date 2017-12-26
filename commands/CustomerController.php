@@ -17,7 +17,7 @@ use app\models\myfactualaddress;
  *
  * @author roni
  */
-class CustController extends MyController{
+class CustomerController extends MyController{
 
 
 public function actionTofile ($filename='1.xml',$fileNumber=1){
@@ -85,7 +85,7 @@ public function actionTofile ($filename='1.xml',$fileNumber=1){
 
             }
 
-            $lineCustomer = $this->getStrVal($keysCustomer, 7);  //количество целых в начале строки VALUES (,,,)
+            $lineCustomer = $this->getStrVal($keysCustomer, 8);  //количество целых в начале строки VALUES (,,,)
             $lineFactAddress = $this->getStrVal($keysFactAddress, 2);  //количество целых в начале строки VALUES (,,,)
             self::$isFirst = true;
 
@@ -106,11 +106,12 @@ public function actionTofile ($filename='1.xml',$fileNumber=1){
     }
 
      public function path() {
-        return 'fcs_nsi/nsiOrganization/';
+        return ['customer' => 'fcs_nsi/nsiOrganization/'];
     }
+
     //источник файлов ZIP для контроллера
-    public function pathResource (){
-        return 'resource/customer/';
+    public function pathResource() {
+        return ['customer' => 'resource/customer/'];
     }
 
     //еще добавляется номер файла и .sql  (для таблиц)
@@ -126,7 +127,19 @@ public function actionTofile ($filename='1.xml',$fileNumber=1){
             unlink('resource/idcurrent/customer');
         }
         exec('rm -f files/customer/*');
+        $this->putToFile($this->pathDestination()['customer'].'0.sql', 'TRUNCATE TABLE customer;');
         exec('rm -f files/factAddress/*');
+        $this->putToFile($this->pathDestination()['factAddress'].'0.sql', 'TRUNCATE TABLE factAddress;');
     }
 
+
+    public function delSqlFile($number) {
+        if (file_exists($this->pathDestination()['customer'].$number.'.sql')) {
+            unlink ($this->pathDestination()['customer'].$number.'.sql');
+        }
+        if (file_exists($this->pathDestination()['factAddress'].$number.'.sql')) {
+            unlink ($this->pathDestination()['factAddress'].$number.'.sql');
+        }
+
+    }
 }
