@@ -23,11 +23,14 @@ class ContractController extends MyController {
 
 
     public function actionContract($fileNumber = 1) {
-
-
+//        print_r (strpos (scandir('temp')[2],'Procedure')); die;
+        if (strpos (scandir('temp')[2],'Procedure')>0) {
+//            echo "нашел Procedure \n";
+            exit;
+        }
         $xmlConract = new mycontract;
         $xmlConract->setAttributes(['sqlfilenumber'=>$fileNumber]);
-       
+
         file_put_contents($this->pathDestination()['contract'].$fileNumber.'.sql', $xmlConract->putXml($this->textArrays()));
         unset ($xmlConract);
         echo "Создан Conract$fileNumber \n";
@@ -68,6 +71,8 @@ class ContractController extends MyController {
         $xmltext = preg_replace('/INN>/', 'inn>', $xmltext);
         $xmltext = preg_replace('/KPP>/', 'kpp>', $xmltext);
         $xmltext = preg_replace('/address/', 'factualAddress', $xmltext);
+        $xmltext = preg_replace('/\\\/', '', $xmltext);
+        $xmltext = preg_replace('/\'/', '"', $xmltext);
         $xmltext = preg_replace('/&apos;/', '', $xmltext);
 
         return $xmltext;

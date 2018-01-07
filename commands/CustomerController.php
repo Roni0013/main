@@ -111,7 +111,10 @@ public function actionTofile ($filename='1.xml',$fileNumber=1){
 
     //источник файлов ZIP для контроллера
     public function pathResource() {
-        return ['customer' => 'resource/customer/'];
+        return [
+            'customer' => 'resource/customer/',
+            'factAddress' => 'resource/customer/',
+            ];
     }
 
     //еще добавляется номер файла и .sql  (для таблиц)

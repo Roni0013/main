@@ -19,8 +19,9 @@ use app\models\mypurchase;
  */
 class NotificationController extends MyController {
 
-    
+
     public function actionNotification($fileNumber = 1) {
+
         $xmlNotif = new mynotification();
         $xmlNotif->setAttributes(['sqlfilenumber'=>$fileNumber]);
         $text=$this->textArrays();
@@ -49,8 +50,8 @@ class NotificationController extends MyController {
         file_put_contents($this->pathDestination()['purchase'].$fileNumber.'.sql', $xmlPurchaseText);
         echo "Создан Purches$fileNumber \n";
         return true;
-        
-        
+
+
     }
 
 
@@ -221,7 +222,8 @@ class NotificationController extends MyController {
         $xmltext = preg_replace('/oos:/', '', $xmltext);
         $xmltext = preg_replace('/ns2:/', '', $xmltext);
         $xmltext = preg_replace('/&apos;/', '', $xmltext);
-        $xmltext = preg_replace('/`/', '', $xmltext);
+        $xmltext = preg_replace('/\\\/', '', $xmltext);
+        $xmltext = preg_replace('/\'/', '"', $xmltext);
         return $xmltext;
     }
 
@@ -230,7 +232,8 @@ class NotificationController extends MyController {
     }
 
     public function pathResource() {
-        return ['notification'=>  'resource/notification/'];
+        return ['notification'=>  'resource/notification/',
+                'purchase'=>  'resource/notification/'];
     }
 
     public function pathDestination() {

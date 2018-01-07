@@ -33,23 +33,18 @@ class MyController extends Controller {
     }
 
     public function getXmlBits($xmlText, $tag='') {
-        
+
         $xmltextBits = [];
         $xmlText = preg_replace('/oos:/', '', $xmlText);
         $xmlText = preg_replace('/ns2:/', '', $xmlText);
         $xmlText = preg_replace('/<signature>.*?<\/signature>/', '', $xmlText);
         $xmlText = preg_replace('/<consRegistryNum>.*?<\/consRegistryNum>/', '', $xmlText);
         $xmlText = preg_replace('/<organizationRole>.*?<\/organizationRole>/', '', $xmlText);
-
         $xmlText = preg_replace('/&apos;/', '', $xmlText);
         $xmlText = preg_replace('/\'/', '"', $xmlText);
-        $xmlText = preg_replace('#\#', '"', $xmlText);
+        $xmlText = preg_replace('/\\\/', '"', $xmlText);
 
         preg_match_all('/(?s)<' . $tag . '>.*?<\/' . $tag . '>/', $xmlText, $xmltextBits);
-//        print_r ($xmltextBits[0]); die;
-//        $kol=preg_match_all('/(?sx)<product>.*? rodu/', $xmlText, $xmltextBits);
-//        print_r ($kol);
-//        print_r ($xmltextBits); die;
         return $xmltextBits[0];
     }
 
@@ -141,10 +136,12 @@ class MyController extends Controller {
             die;
         }
         $className = substr($paramToExec,0, strpos($paramToExec, '/'));
+        $pathFolder=$this->pathResource()[$tableName];
 //        print_r($tableName);
-        if ($parametr == '1') {
+        if ($parametr == '0') {
             echo "Внимание!!! Будет произведен сброс через 5 секунд!!! \n";
-//            sleep(5);
+            sleep(5);
+            echo "Старт \n";
             $this->resetFiles($tableName);         //для каждого контроллера и таблицы свой сброс
             files::deleteAll(['tablename'=>$tableName]);
             $fileObj = new files();
@@ -152,7 +149,21 @@ class MyController extends Controller {
             $fileObj->save();
             unset ($fileObj);
 
+        } elseif ($parametr>0) {
+            echo "поиск sql под номером $parametr для таблицы $tableName\n";
+
+            $fileTable= files::find()->where(['tablename'=>$tableName,'number'=>$parametr])->asArray()->limit(1)->one();
+            $zipFile=$fileTable['zipfile'];
+            exec('rm -f temp/*');
+            self::unZip($pathFolder . $zipFile);
+            exec ('rm -f temp/*.sig');
+            $commandTofile = "php yii $className/$tableName $parametr";
+            print_r($commandTofile."\n");
+            exec($commandTofile);
+            filestodb::deleteAll(['tablename'=>$tableName,'number'=>$parametr]);
+            exit;
         }
+
         $query = files::find()->where(['tablename'=>$tableName])->asArray()->all();
 //      список zip файлов из таблицы
         $zipsFilesCache= array_column($query, 'zipfile');
@@ -166,7 +177,6 @@ class MyController extends Controller {
         }
         if ($fileNumber == 0) $fileNumber = 1;
 //            echo "$tableName"; die;
-            $pathFolder=$this->pathResource()[$tableName];
 
             $pathTempFolder = 'temp/';
 
@@ -308,7 +318,7 @@ class MyController extends Controller {
 //        $tableNames = array_keys($this->pathDestination());
 //        sort ($tableNames);
         //если один, то обнулить таблицу filestodb удалить все записи из БД
-        if ($parametr == 1) {
+        if ($parametr == 0) {
 //            foreach ($tableNames as $tableName) {
                 filestodb::deleteAll(['tablename' => $tableName]);
 //            }
@@ -341,12 +351,14 @@ class MyController extends Controller {
             sort($sqlDiffFiles);
 //            print_r ($sqlDiffFiles); die;
             //      всю эту разницу вставить в БД
+//            print_r($sqlDiffFiles);
             foreach ($sqlDiffFiles as $sqlNumb) {
                 //перед вставкой удалить все записи с данным номером файла $sqlNumb
                 $this->delDoubleIds($tableName, $sqlNumb);
                 $fileTodb = new filestodb();
                 //       сформировать путь до sql файла
                 $pathExec = dirname($this->pathDestination()[$tableName]) . '/' . $tableName . $sqlNumb . '.sql';
+
                 if (file_exists($pathExec)) {
                     $command = "mysql -u $user -p$passwd $dbName < $pathExec";
                     echo "Вставка $tableName$sqlNumb.sql";
@@ -356,6 +368,9 @@ class MyController extends Controller {
                     unset($fileTodb);
 //                      print_r ($command ."\n");
 //
+                }else {
+                    echo "Файл $pathExec не существует \n";
+                    files::deleteAll(['tablename'=>$tableName,'number'=>$sqlNumb]);
                 }
             }
 //        }
