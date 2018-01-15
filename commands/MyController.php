@@ -307,7 +307,7 @@ class MyController extends Controller {
 
 
     //вставка sql файлов в БД
-    public function actionTodb($tableName = '',$parametr = 0) {
+    public function actionTodb($tableName = '',$parametr = '') {
         $request = \yii::$app->request->getParams()[0];
         $className = substr($request, 0, strpos($request, '/'));
         if (empty($tableName)) {
@@ -318,11 +318,13 @@ class MyController extends Controller {
 //        $tableNames = array_keys($this->pathDestination());
 //        sort ($tableNames);
         //если один, то обнулить таблицу filestodb удалить все записи из БД
-        if ($parametr == 0) {
+        if ($parametr == '0') {
 //            foreach ($tableNames as $tableName) {
                 filestodb::deleteAll(['tablename' => $tableName]);
 //            }
         }
+
+        
 //        для каждой таблицы
 //        foreach ($tableNames as $tableName) {
             $dbConfig = \yii::$app->db;

@@ -1,3 +1,10 @@
-#autocomp {
-    width: 100%;
+body {
+    background: #93c3cd;
+}
+
+.row-px {
+    height: 40px;
+}
+.first-col {
+    width: 15%;
 }

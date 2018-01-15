@@ -40,7 +40,7 @@ class NotifController extends Controller
         }
 //        debug ($keyval);
         $this->view->title = 'Заголовок';
-        return $this->render('okpd', compact('OKPD', 'keyval'),['tittle'=>'Название']);
+        return $this->render('startfind', compact('OKPD', 'keyval'),['tittle'=>'Название']);
     }
 
     public function actionNotif() {
@@ -77,17 +77,30 @@ class NotifController extends Controller
     }
 
     public function actionComplete() {
-//        debug ('Complete');
         $get=Yii::$app->request->get();
 
         $customer = new customer();
-        $data=$customer->find()->select('fullName as value')->where(['like','fullName',$get['term']])->asArray()->limit(100)->all();
+        $data=$customer->find()->select('fullName')->where(['like','fullName',$get['term']])->limit(20)->all();
+//        debug ($data);
         foreach ($data as $val) {
-            $text[]=$val['value'];
+            $text[]=$val['fullName'];
         }
 //        debug ($text);
 
         echo \yii\helpers\Json::encode($text);
     }
 
+    public function actionOnecustom() {
+        $id=Yii::$app->request->post();
+        $fullName = $id['customer']['fullName'];
+        $customObj = new customer;
+        $allCustomData = $customObj->find()->where(['like','fullName',$fullName,FALSE])->one();
+        $contractObj = new \app\models\contract();
+        $regNumber=$allCustomData['regNumber'];
+//        debug ($regNumber);
+        $contractCustomers = $contractObj->find()->where(['customer' =>$regNumber])->with('product','supplier')->limit(20)->all();
+//        $prod=$contractCustomer->getProduct();
+//        debug ($contractCustomers);
+        return $this->render('onecustomer', compact('allCustomData','contractCustomers'));
+    }
 }

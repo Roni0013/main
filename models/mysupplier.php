@@ -38,9 +38,10 @@ class mysupplier extends baseXmlSql{
             [[
 //                'id',
                 'participantType',
-            'inn', 'kpp', 'organizationName', 'factualAddress', 'postAddress',
+             'factualAddress', 'postAddress','organizationName',
             'contactEmail', 'contactPhone','contactFax', 'isIP',
-            'lastName','sqlfilenumber'], 'safe']
+            'lastName'], 'string'],
+            [['inn','kpp','sqlfilenumber'],'integer']
         ];
     }
 
@@ -59,7 +60,12 @@ class mysupplier extends baseXmlSql{
           'inn'=>[
               'export/contract/suppliers/supplier/legalEntityRF/inn',
               'export/contract/suppliers/supplier/individualPersonRF/inn',
-              'export/contract/suppliers/supplier/inn'],
+              'export/contract/suppliers/supplier/inn',
+              'export/contract/suppliers/supplier/legalEntityRF/INN',
+              'export/contract/suppliers/supplier/individualPersonRF/INN',
+              'export/contract/suppliers/supplier/INN'
+
+              ],
           'kpp'=>[
               'export/contract/suppliers/supplier/legalEntityRF/kpp',
               'export/contract/suppliers/supplier/individualPersonRF/kpp',
@@ -80,10 +86,10 @@ class mysupplier extends baseXmlSql{
               'export/contract/suppliers/supplier/legalEntityRF/postAddress',
               'export/contract/suppliers/supplier/individualPersonRF/postAddress',
               'export/contract/suppliers/supplier/postAddress'],
-            'contactEmail'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/contactEmail',
-              'export/contract/suppliers/supplier/individualPersonRF/contactEmail',
-              'export/contract/suppliers/supplier/contactEmail'],
+            'contactEMail'=>[
+              'export/contract/suppliers/supplier/legalEntityRF/contactEMail',
+              'export/contract/suppliers/supplier/individualPersonRF/contactEMail',
+              'export/contract/suppliers/supplier/contactEMail'],
             'contactPhone'=>[
               'export/contract/suppliers/supplier/legalEntityRF/contactPhone',
               'export/contract/suppliers/supplier/individualPersonRF/contactPhone',
@@ -97,7 +103,10 @@ class mysupplier extends baseXmlSql{
               'export/contract/suppliers/supplier/individualPersonRF/isIP',
               'export/contract/suppliers/supplier/isIP'],
             'lastName'=>[
-              'export/contract/suppliers/supplier/contactInfo/lastName']
+              'export/contract/suppliers/supplier/contactInfo/lastName',
+              'export/contract/suppliers/supplier/individualPersonRF/lastName',
+              'export/contract/suppliers/supplier/legalEntityRF/lastName',
+                ]
         ];
     }
 }

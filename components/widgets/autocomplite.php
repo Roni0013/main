@@ -3,6 +3,8 @@ namespace app\components\widgets;
 use yii\base\Widget;
 use yii\jui\AutoComplete;
 use yii\helpers\Url;
+use Yii;
+use app\models\customer;
 
 class autocomplite extends Widget{
 
@@ -18,13 +20,15 @@ class autocomplite extends Widget{
 //        }
 
         return AutoComplete::widget([
+
+
             'options'=>[
-                'class'=>'mystyle.css',
+                'class'=>'form-control',
                 'id'=>'autocomp'
             ],
 
             'clientOptions' => [
-                'source' => Url::to('/notif/complete'),
+                'source'=> Url::to('notif/complete'),
                 'minLength'=>'3',
                 'delay'=>'700'
             ]

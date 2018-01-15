@@ -44,7 +44,7 @@ class Contract extends ActiveRecord {
     }
 
     public function getProduct() {
-        return $this->hasMany(product::className(), ['id'=>'product_id'])->viaTable('contract_product', ['contract_id'=>'id']);
+        return $this->hasMany(product::className(), ['contract_id'=>'id']);
     }
 
 

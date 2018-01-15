@@ -38,6 +38,10 @@ class ContractController extends MyController {
     }
 
     public function actionProduct($fileNumber = 1) {
+        if (strpos (scandir('temp')[2],'Procedure')>0) {
+//            echo "нашел Procedure \n";
+            exit;
+        }
         $xmlBits = $this->textArrays();
         $xmlProductText='';
         foreach ($xmlBits as $xBit) {
@@ -48,6 +52,7 @@ class ContractController extends MyController {
             $producObj = new myproduct();
             $producObj->setAttributes(['contract_id'=>$contractNumber,'sqlfilenumber'=>$fileNumber]);
             $xmlProductText .= $producObj->putXml($productBit);
+//            print_r ($xmlProductText); die;
             unset ($producObj,$productBit);
         }
         file_put_contents($this->pathDestination()['product'].$fileNumber.'.sql', $xmlProductText);
@@ -56,6 +61,10 @@ class ContractController extends MyController {
     }
 
     public function actionSupplier($fileNumber = 1) {
+        if (strpos (scandir('temp')[2],'Procedure')>0) {
+//            echo "нашел Procedure \n";
+            exit;
+        }
         $xmlSupplier = new mysupplier();
         $xmlSupplier->setAttributes(['sqlfilenumber'=>$fileNumber]);
         file_put_contents($this->pathDestination()['supplier'].$fileNumber.'.sql', $xmlSupplier->putXml($this->textArrays()));
