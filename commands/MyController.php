@@ -150,7 +150,7 @@ class MyController extends Controller {
             unset ($fileObj);
 
         } elseif ($parametr>0) {
-            echo "поиск sql под номером $parametr для таблицы $tableName\n";
+            echo "поиск $tableName.sql под номером $parametr для таблицы $tableName\n";
 
             $fileTable= files::find()->where(['tablename'=>$tableName,'number'=>$parametr])->asArray()->limit(1)->one();
             $zipFile=$fileTable['zipfile'];
@@ -299,20 +299,19 @@ class MyController extends Controller {
 //        заполнить массив xmlBits
         $xmlBits = [];
         foreach ($fileNames as $fileName) {
-            $xmlBits[] = $this->getXmlArray ('temp/'.$fileName);
+            $xmlBits[] = $this->getXmlArray('temp/' . $fileName);
         }
 //        print_r ($xmlBits); die;
         return $xmlBits;
     }
 
-
     //вставка sql файлов в БД
-    public function actionTodb($tableName = '',$parametr = '') {
+    public function actionTodb($tableName = '', $parametr = '') {
         $request = \yii::$app->request->getParams()[0];
         $className = substr($request, 0, strpos($request, '/'));
         if (empty($tableName)) {
             echo "Укажите название таблицы \n";
-            print_r (array_keys($this->pathDestination()));
+            print_r(array_keys($this->pathDestination()));
             die;
         }
 //        $tableNames = array_keys($this->pathDestination());
@@ -320,61 +319,62 @@ class MyController extends Controller {
         //если один, то обнулить таблицу filestodb удалить все записи из БД
         if ($parametr == '0') {
 //            foreach ($tableNames as $tableName) {
-                filestodb::deleteAll(['tablename' => $tableName]);
+            filestodb::deleteAll(['tablename' => $tableName]);
 //            }
         }
 
-        
+
 //        для каждой таблицы
 //        foreach ($tableNames as $tableName) {
-            $dbConfig = \yii::$app->db;
-            $user = $dbConfig->username;
-            $passwd = $dbConfig->password;
-            $dbName = substr($dbConfig->dsn, strrpos($dbConfig->dsn, '=') + 1);
+        $dbConfig = \yii::$app->db;
+        $user = $dbConfig->username;
+        $passwd = $dbConfig->password;
+        $dbName = substr($dbConfig->dsn, strrpos($dbConfig->dsn, '=') + 1);
 //            echo "$dbName"; die;
-            //      взять все номера файлов из zip таблицы которые обработаны
-            $queryNumber = files::find()->where(['tablename' => $tableName])->asArray()->all();
-            //      список zip файлов из таблицы
-            $sqlNumberCache = array_column($queryNumber, 'number');
-            if (!isset($sqlNumberCache)) {
-                echo "Вставлять нечего \n";
-                exit;
-            }
-            //       взять все номера  файлов, которые уже вставлены в БД
-            $queryBd = filestodb::find()->where(['tablename' => $tableName])->asArray()->all();
+        //      взять все номера файлов из zip таблицы которые обработаны
+        $queryNumber = files::find()->where(['tablename' => $tableName])->asArray()->all();
+        //      список zip файлов из таблицы
+        $sqlNumberCache = array_column($queryNumber, 'number');
+        if (!isset($sqlNumberCache)) {
+            echo "Вставлять нечего \n";
+            exit;
+        }
+        //       взять все номера  файлов, которые уже вставлены в БД
+        $queryBd = filestodb::find()->where(['tablename' => $tableName])->asArray()->all();
 
-            $sqlFilesDb = array_column($queryBd, 'number');
-            //найти разницу в массивах
-            $sqlDiffFiles = array_diff($sqlNumberCache, $sqlFilesDb);
-            if (!isset($sqlDiffFiles)) {
-                echo "Вставлять нечего \n";
-                exit;
-            }
-            sort($sqlDiffFiles);
+        $sqlFilesDb = array_column($queryBd, 'number');
+        //найти разницу в массивах
+        $sqlDiffFiles = array_diff($sqlNumberCache, $sqlFilesDb);
+        if (!isset($sqlDiffFiles)) {
+            echo "Вставлять нечего \n";
+            exit;
+        }
+        sort($sqlDiffFiles);
 //            print_r ($sqlDiffFiles); die;
-            //      всю эту разницу вставить в БД
+        //      всю эту разницу вставить в БД
 //            print_r($sqlDiffFiles);
-            foreach ($sqlDiffFiles as $sqlNumb) {
-                //перед вставкой удалить все записи с данным номером файла $sqlNumb
-                $this->delDoubleIds($tableName, $sqlNumb);
-                $fileTodb = new filestodb();
-                //       сформировать путь до sql файла
-                $pathExec = dirname($this->pathDestination()[$tableName]) . '/' . $tableName . $sqlNumb . '.sql';
+        foreach ($sqlDiffFiles as $sqlNumb) {
+            //перед вставкой удалить все записи с данным номером файла $sqlNumb
+            $this->delDoubleIds($tableName, $sqlNumb);
+            $fileTodb = new filestodb();
+            //       сформировать путь до sql файла
+            $pathExec = dirname($this->pathDestination()[$tableName]) . '/' . $tableName . $sqlNumb . '.sql';
 
-                if (file_exists($pathExec)) {
-                    $command = "mysql -u $user -p$passwd $dbName < $pathExec";
-                    echo "Вставка $tableName$sqlNumb.sql";
-                    exec($command);
-                    $fileTodb->setAttributes(['tablename' => $tableName, 'number' => $sqlNumb]);
-                    $fileTodb->save();
-                    unset($fileTodb);
+            if (file_exists($pathExec)) {
+                $command = "mysql -u $user -p$passwd $dbName < $pathExec";
+                echo "Вставка $tableName$sqlNumb.sql";
+                exec($command);
+
 //                      print_r ($command ."\n");
 //
-                }else {
-                    echo "Файл $pathExec не существует \n";
-                    files::deleteAll(['tablename'=>$tableName,'number'=>$sqlNumb]);
-                }
+            } else {
+                echo "Файл $pathExec не существует \n";
+//                    files::deleteAll(['tablename'=>$tableName,'number'=>$sqlNumb]);
             }
+            $fileTodb->setAttributes(['tablename' => $tableName, 'number' => $sqlNumb]);
+            $fileTodb->save();
+            unset($fileTodb);
+        }
 //        }
     }
 

@@ -19,25 +19,19 @@ AppAsset::register($this);
 </head>
 <body>
 <?php $this->beginBody() ?>
-
-<div class="wrap container">
-    <div class="navbar navbar-default navbar-static-top">
-        меню1
-    </div>
-
-    <div class="row">
-        <div class="col-xs-2">
-            2 колонки
-            <p>меню сайта</p>
+    <header>
+        <div class="logo">
+            <a href="#" ><img src="/web/img/contract.png" alt="logo" class="graficlogo" ></a>
         </div>
-        <div class="col-xs-10">
-            10 колонок
-          <?= $content  ?>
-        </div>
-    </div>
-
-</div>
-
+        <nav>
+            <div class="topnav">
+                <a href="index.html">Начало</a>
+                <a href="findsupp.html">Поиск поставщиков</a>
+                <a href="#">Поиск исполнителей</a>
+                <a href="#">Обо мне</a>
+            </div>
+        </nav>
+    </header>
 
 
 <footer class="footer">

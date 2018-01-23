@@ -23,7 +23,7 @@ class supplier extends \yii\db\ActiveRecord{
     }
 
     public function getContract() {
-        return $this->hasMany(Contract::className(), ['supplier_id'=>'id'])->inverseOf('supplier');
+        return $this->hasOne(contract::className(), ['id'=>'contract_id']);
     }
 
 

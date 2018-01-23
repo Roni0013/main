@@ -19,6 +19,7 @@ class mysupplier extends baseXmlSql{
     public $inn;
     public $kpp;
     public $sqlfilenumber;
+    public  $contract_id;
 
 
 
@@ -41,7 +42,7 @@ class mysupplier extends baseXmlSql{
              'factualAddress', 'postAddress','organizationName',
             'contactEmail', 'contactPhone','contactFax', 'isIP',
             'lastName'], 'string'],
-            [['inn','kpp','sqlfilenumber'],'integer']
+            [['inn','kpp','sqlfilenumber','contract_id'],'integer']
         ];
     }
 
@@ -52,61 +53,62 @@ class mysupplier extends baseXmlSql{
 
 
     public static function intValues() {
-        return 3;
+        return 4;
     }
 
     public function xrules() {
         return [
           'inn'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/inn',
-              'export/contract/suppliers/supplier/individualPersonRF/inn',
-              'export/contract/suppliers/supplier/inn',
-              'export/contract/suppliers/supplier/legalEntityRF/INN',
-              'export/contract/suppliers/supplier/individualPersonRF/INN',
-              'export/contract/suppliers/supplier/INN'
+              'supplier/legalEntityRF/inn',
+              'supplier/individualPersonRF/inn',
+              'supplier/inn',
+              'supplier/legalEntityRF/INN',
+              'supplier/individualPersonRF/INN',
+              'supplier/INN'
 
               ],
           'kpp'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/kpp',
-              'export/contract/suppliers/supplier/individualPersonRF/kpp',
-              'export/contract/suppliers/supplier/kpp'],
+              'supplier/legalEntityRF/kpp',
+              'supplier/individualPersonRF/kpp',
+              'supplier/kpp'],
           'sqlfilenumber' => [$this->sqlfilenumber],
           'participantType'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/participantType',
-              'export/contract/suppliers/supplier/individualPersonRF/participantType',
-              'export/contract/suppliers/supplier/participantType'],
+              'supplier/legalEntityRF/participantType',
+              'supplier/individualPersonRF/participantType',
+              'supplier/participantType'],
             'organizationName'=>[
-                'export/contract/suppliers/supplier/legalEntityRF/fullName',
-                'export/contract/suppliers/supplier/organizationName'],
+                'supplier/legalEntityRF/fullName',
+                'supplier/organizationName'],
             'factualAddress'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/factualAddress',
-              'export/contract/suppliers/supplier/individualPersonRF/factualAddress',
-              'export/contract/suppliers/supplier/factualAddress'],
+              'supplier/legalEntityRF/factualAddress',
+              'supplier/individualPersonRF/factualAddress',
+              'supplier/factualAddress'],
             'postAddress'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/postAddress',
-              'export/contract/suppliers/supplier/individualPersonRF/postAddress',
-              'export/contract/suppliers/supplier/postAddress'],
+              'supplier/legalEntityRF/postAddress',
+              'supplier/individualPersonRF/postAddress',
+              'supplier/postAddress'],
             'contactEMail'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/contactEMail',
-              'export/contract/suppliers/supplier/individualPersonRF/contactEMail',
-              'export/contract/suppliers/supplier/contactEMail'],
+              'supplier/legalEntityRF/contactEMail',
+              'supplier/individualPersonRF/contactEMail',
+              'supplier/contactEMail'],
             'contactPhone'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/contactPhone',
-              'export/contract/suppliers/supplier/individualPersonRF/contactPhone',
-              'export/contract/suppliers/supplier/contactPhone'],
+              'supplier/legalEntityRF/contactPhone',
+              'supplier/individualPersonRF/contactPhone',
+              'supplier/contactPhone'],
             'contactFax'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/contactFax',
-              'export/contract/suppliers/supplier/individualPersonRF/contactFax',
-              'export/contract/suppliers/supplier/contactFax'],
+              'supplier/legalEntityRF/contactFax',
+              'supplier/individualPersonRF/contactFax',
+              'supplier/contactFax'],
             'isIP'=>[
-              'export/contract/suppliers/supplier/legalEntityRF/isIP',
-              'export/contract/suppliers/supplier/individualPersonRF/isIP',
-              'export/contract/suppliers/supplier/isIP'],
+              'supplier/legalEntityRF/isIP',
+              'supplier/individualPersonRF/isIP',
+              'supplier/isIP'],
             'lastName'=>[
-              'export/contract/suppliers/supplier/contactInfo/lastName',
-              'export/contract/suppliers/supplier/individualPersonRF/lastName',
-              'export/contract/suppliers/supplier/legalEntityRF/lastName',
-                ]
+              'supplier/contactInfo/lastName',
+              'supplier/individualPersonRF/lastName',
+              'supplier/legalEntityRF/lastName',
+                ],
+            'contract_id'=>[$this->contract_id],
         ];
     }
 }

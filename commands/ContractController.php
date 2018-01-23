@@ -24,9 +24,11 @@ class ContractController extends MyController {
 
     public function actionContract($fileNumber = 1) {
 //        print_r (strpos (scandir('temp')[2],'Procedure')); die;
-        if (strpos (scandir('temp')[2],'Procedure')>0) {
-//            echo "нашел Procedure \n";
-            exit;
+        if (isset(scandir('temp')[2])) {
+            if (strpos(scandir('temp')[2], 'Procedure') > 0) {
+                //            echo "нашел Procedure \n";
+                exit;
+            }
         }
         $xmlConract = new mycontract;
         $xmlConract->setAttributes(['sqlfilenumber'=>$fileNumber]);
@@ -38,9 +40,11 @@ class ContractController extends MyController {
     }
 
     public function actionProduct($fileNumber = 1) {
-        if (strpos (scandir('temp')[2],'Procedure')>0) {
+        if (isset(scandir('temp')[2])) {
+            if (strpos(scandir('temp')[2], 'Procedure') > 0) {
 //            echo "нашел Procedure \n";
-            exit;
+                exit;
+            }
         }
         $xmlBits = $this->textArrays();
         $xmlProductText='';
@@ -61,14 +65,27 @@ class ContractController extends MyController {
     }
 
     public function actionSupplier($fileNumber = 1) {
-        if (strpos (scandir('temp')[2],'Procedure')>0) {
+//        $listFilesInDir=strpos(scandir('temp');
+        if (isset(scandir('temp')[2])) {
+            if (strpos(scandir('temp')[2], 'Procedure') > 0) {
 //            echo "нашел Procedure \n";
-            exit;
+                exit;
+            }
         }
-        $xmlSupplier = new mysupplier();
-        $xmlSupplier->setAttributes(['sqlfilenumber'=>$fileNumber]);
-        file_put_contents($this->pathDestination()['supplier'].$fileNumber.'.sql', $xmlSupplier->putXml($this->textArrays()));
-        unset ($xmlSupplier);
+        $xmlBits = $this->textArrays();
+        $xmlSupplierText='';
+        foreach ($xmlBits as $xBit) {
+            $start=strpos($xBit, 'id>');
+            $end = strpos($xBit, '</id');
+            $contractNumber = substr($xBit, $start+3, $end-$start-3);
+            $supplierBit = $this->getXmlBits($xBit, 'supplier');
+            $supplierObj = new mysupplier();
+            $supplierObj->setAttributes(['contract_id'=>$contractNumber,'sqlfilenumber'=>$fileNumber]);
+            $xmlSupplierText .= $supplierObj->putXml($supplierBit);
+            unset ($supplierObj, $supplierBit);
+        }
+
+        file_put_contents($this->pathDestination()['supplier'].$fileNumber.'.sql', $xmlSupplierText);
         echo "Создан Supplier$fileNumber \n";
     }
 

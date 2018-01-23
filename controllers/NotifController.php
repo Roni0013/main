@@ -25,6 +25,13 @@ class NotifController extends Controller
  {
     public function actionIndex() {
 
+//
+        $this->view->title = 'Начало';
+        return $this->render('index');
+    }
+
+    public function actionIndex1() {
+
 //        phpinfo(); die;
         $OKPD = new okpd();
 
@@ -102,5 +109,9 @@ class NotifController extends Controller
 //        $prod=$contractCustomer->getProduct();
 //        debug ($contractCustomers);
         return $this->render('onecustomer', compact('allCustomData','contractCustomers'));
+    }
+
+    public function actionFindsupp() {
+        return $this->render('findsupp');
     }
 }

@@ -18,7 +18,7 @@ class mycontract extends baseXmlSql{
     public $regNum;
     public $price;
 //    public $price2;
-    public $supplierInn;
+//    public $supplierInn;
     public $customer;
     public $singlereason_id;
     public $sqlfilenumber;
@@ -38,12 +38,11 @@ class mycontract extends baseXmlSql{
 
     public function rules() {
         return [
-            [['id', 'regNum',
-            'price',
-//                'price2',
-                'supplier_id', 'customer', 'singlereason_id', 'number',
-            'signDate', 'publishDate','versionNumber', 'href',
-            'currentContractStage', 'protocolDate', 'documentBase','sqlfilenumber','supplierInn'], 'safe']
+            [[
+            'number', 'signDate', 'publishDate','versionNumber', 'href',
+            'currentContractStage', 'protocolDate', 'documentBase','responsible_id'], 'safe'],
+            [['id','regNum','customer','singlereason_id','sqlfilenumber'],'integer'],
+            [['price'],'double']
         ];
     }
 
@@ -52,7 +51,7 @@ class mycontract extends baseXmlSql{
     }
 
     public static function intValues() {
-        return 7;
+        return 6;
     }
 
     public function xrules() {
@@ -60,14 +59,6 @@ class mycontract extends baseXmlSql{
           'id'=>['export/contract/id'],
           'regNum'=>['export/contract/regNum'],
           'price'=>['export/contract/priceInfo/price', 'export/contract/price'],
-          'supplierInn'=>[
-                            'export/contract/suppliers/supplier/legalEntityRF/INN',
-                            'export/contract/suppliers/supplier/INN',
-                            'export/contract/suppliers/individualPersonRF/INN',
-                            'export/contract/suppliers/supplier/legalEntityRF/inn',
-                            'export/contract/suppliers/supplier/inn',
-                            'export/contract/suppliers/individualPersonRF/inn',
-              ],
           'customer'=>['export/contract/customer/regNum'],
           'singlereason_id'=>['export/contract/singleCustomerReason/id','export/contract/foundation/fcsOrder/order/singleCustomer/reason/code'],
           'sqlfilenumber'=>[$this->sqlfilenumber],
