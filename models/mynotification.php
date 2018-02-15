@@ -20,6 +20,7 @@ class mynotification extends baseXmlSql{
     public  $maxPrice;
     public  $responsibleOrg;
     public  $sqlfilenumber;
+    public  $price;
 
 
     public  $purchaseObjectInfo;
@@ -50,7 +51,7 @@ class mynotification extends baseXmlSql{
         return [
             [['id', 'purchaseNumber','docPublishDate', 'href', 'purchaseObjectInfo', 'customer', 'maxPrice',
             'restrictInfo', 'ETP','biddingDate', 'deliveryPlace','responsibleOrg','placingWay','startDate','endDate','deliveryTerm',
-                'sqlfilenumber','canselId','prolongId','contractNumber'], 'safe']
+                'sqlfilenumber','canselId','prolongId','contractNumber','price'], 'safe']
         ];
     }
 
@@ -61,7 +62,7 @@ class mynotification extends baseXmlSql{
     }
 
     public static function intValues() {
-        return 6;
+        return 7;
     }
 
     public function xrules() {
@@ -87,7 +88,8 @@ class mynotification extends baseXmlSql{
                             'export/fcsNotificationISM/purchaseNumber',
                             'export/fcsNotificationOKOU/purchaseNumber',
                             'export/fcsPurchaseDocument/purchaseNumber',
-                            'export/fcsClarification/purchaseNumber'],
+                            'export/fcsClarification/purchaseNumber',
+                            'export/fcsContractSign/foundation/order/purchaseNumber'],
           'customer'=>['export/fcsNotificationEP/lot/customerRequirements/customerRequirement/customer/regNum',
                         'export/fcsNotificationEF/lot/customerRequirements/customerRequirement/customer/regNum',
                         'export/fcsNotificationOK/lot/customerRequirements/customerRequirement/customer/regNum',
@@ -162,26 +164,26 @@ class mynotification extends baseXmlSql{
                     'export/fcsNotificationPO/ETP/code',
                     'export/fcsNotificationISM/ETP/code',
                     'export/fcsNotificationOKOU/ETP/code'],
-          'startDate'=>['export/fcsNotificationEP/startDate',
-                        'export/fcsNotificationEF/startDate',
-                        'export/fcsNotificationOK/startDate',
-                        'export/fcsNotificationZK/startDate',
-                        'fcsNotificationZK/startDate',
-                        'fcsNotificationEP/startDate',
-                        'export/fcsNotificationPO/startDate',
-                        'export/fcsNotificationZP/startDate',
-                        'export/fcsNotificationISM/startDate',
-                        'export/fcsNotificationOKOU/startDate'],
-          'endDate'=>['export/fcsNotificationEP/endDate',
-                        'export/fcsNotificationEF/endDate',
-                        'export/fcsNotificationOK/endDate',
-                        'export/fcsNotificationZK/endDate',
-                        'fcsNotificationZK/endDate',
-                        'fcsNotificationEP/endDate',
-                        'export/fcsNotificationPO/endDate',
-                        'export/fcsNotificationZP/endDate',
-                        'export/fcsNotificationISM/endDate',
-                        'export/fcsNotificationOKOU/endDate'],
+          'startDate'=>['export/fcsNotificationEP/procedureInfo/collecting/startDate',
+                        'export/fcsNotificationEF/procedureInfo/collecting/startDate',
+                        'export/fcsNotificationOK/procedureInfo/collecting/startDate',
+                        'export/fcsNotificationZK/procedureInfo/collecting/startDate',
+                        'fcsNotificationZK/procedureInfo/collecting/startDate',
+                        'fcsNotificationEP/procedureInfo/collecting/startDate',
+                        'export/fcsNotificationPO/procedureInfo/collecting/startDate',
+                        'export/fcsNotificationZP/procedureInfo/collecting/startDate',
+                        'export/fcsNotificationISM/procedureInfo/collecting/startDate',
+                        'export/fcsNotificationOKOU/procedureInfo/collecting/startDate'],
+          'endDate'=>['export/fcsNotificationEP/procedureInfo/collecting/endDate',
+                        'export/fcsNotificationEF/procedureInfo/collecting/endDate',
+                        'export/fcsNotificationOK/procedureInfo/collecting/endDate',
+                        'export/fcsNotificationZK/procedureInfo/collecting/endDate',
+                        'fcsNotificationZK/procedureInfo/collecting/endDate',
+                        'fcsNotificationEP/procedureInfo/collecting/endDate',
+                        'export/fcsNotificationPO/procedureInfo/collecting/endDate',
+                        'export/fcsNotificationZP/procedureInfo/collecting/endDate',
+                        'export/fcsNotificationISM/procedureInfo/collecting/endDate',
+                        'export/fcsNotificationOKOU/procedureInfo/collecting/endDate'],
           'biddingDate'=>['export/fcsNotificationEP/procedureInfo/bidding/date',
                         'export/fcsNotificationEF/procedureInfo/bidding/date',
                         'export/fcsNotificationOK/procedureInfo/bidding/date',
@@ -255,6 +257,7 @@ class mynotification extends baseXmlSql{
                 'export/fcsPurchaseProlongationOKOU/purchaseNumber',
                 ],
             'contractNumber'=>['export/fcsContractSign/number'],
+            'price'=>['export/fcsContractSign/price']
 
         ];
     }

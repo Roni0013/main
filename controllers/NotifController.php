@@ -25,7 +25,7 @@ class NotifController extends Controller
  {
     public function actionIndex() {
 
-//
+//        $supplier_obj = new \app\models\supplier();
         $this->view->title = 'Начало';
         return $this->render('index');
     }
@@ -111,7 +111,5 @@ class NotifController extends Controller
         return $this->render('onecustomer', compact('allCustomData','contractCustomers'));
     }
 
-    public function actionFindsupp() {
-        return $this->render('findsupp');
-    }
+
 }

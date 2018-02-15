@@ -4,6 +4,7 @@ use yii\helpers\Html;
 use app\assets\AppAsset;
 use yii\bootstrap\NavBar;
 use yii\bootstrap\Nav;
+use yii\helpers\Url;
 AppAsset::register($this);
 ?>
 <?php $this->beginPage() ?>
@@ -20,20 +21,34 @@ AppAsset::register($this);
 <body>
 <?php $this->beginBody() ?>
     <header>
-        <div class="logo">
-            <a href="#" ><img src="/web/img/contract.png" alt="logo" class="graficlogo" ></a>
+        <div class="sitecapt">
+            Аналитика госзакупок
         </div>
-        <nav>
-            <div class="topnav">
-                <a href="index.html">Начало</a>
-                <a href="findsupp.html">Поиск поставщиков</a>
-                <a href="#">Поиск исполнителей</a>
-                <a href="#">Обо мне</a>
-            </div>
-        </nav>
+        <div class="site_nav wraper" >
+            <nav>
+                <ul>
+                    <li><a href="#">Главная</a></li>
+                    <li><a href="#">О проекте</a></li>
+                </ul>
+            </nav>
+        </div>
     </header>
+    <main class="wraper">
+		<div class="left_menu">
+			<h2>Информация по участникам</h2>
+			<ul>
+                            <li><?= Html::a('Заказчики', Url::to('/customer/formcustomer'))  ?></li>
+				<li><?= Html::a('Исполнители', Url::to('/supplier/formsupplier'))  ?></li>
+				<li><a href="#">Тендеры</a></li>
+			</ul>
+		</div>
+        <div class="midcont">
+            <?= $content  ?>
+        </div>
+    </main>
 
 
+<div style="clear: both;"></div>
 <footer class="footer">
     <div class="container">
         <p class="pull-left">&copy; My Company <?= date('Y') ?></p>
